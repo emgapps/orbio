@@ -1,0 +1,64 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createOrb } from "../create-orb";
+
+describe("createOrb", () => {
+  beforeEach(() => {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.body.innerHTML = "";
+  });
+
+  it("mounts a renderer, sizes the container, and exposes accessible labeling", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+
+    const orb = createOrb({
+      container,
+      settings: { size: 128 },
+      ariaLabel: "Assistant orb",
+    });
+
+    expect(container.style.width).toBe("128px");
+    expect(container.style.height).toBe("128px");
+    expect(container.getAttribute("role")).toBe("img");
+    expect(container.getAttribute("aria-label")).toBe("Assistant orb");
+    expect(container.firstElementChild?.getAttribute("data-renderer")).toBe("css");
+
+    orb.destroy();
+  });
+
+  it("updates state and settings without remounting the controller", () => {
+    const container = document.createElement("div");
+    const onStateChange = vi.fn();
+    document.body.append(container);
+
+    const orb = createOrb({ container, onStateChange });
+
+    orb.setState("speaking");
+    orb.setSettings({ size: 144 });
+
+    expect(container.dataset.orbState).toBe("speaking");
+    expect(container.style.width).toBe("144px");
+    expect(container.style.height).toBe("144px");
+    expect(onStateChange).toHaveBeenCalledWith("speaking");
+
+    orb.destroy();
+  });
+
+  it("cleans up renderer children on destroy", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+
+    const orb = createOrb({ container });
+    expect(container.childElementCount).toBe(1);
+
+    orb.destroy();
+
+    expect(container.childElementCount).toBe(0);
+  });
+});
