@@ -1,0 +1,26 @@
+{
+  "name": "orbio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @voca/orb-core build && pnpm --filter @voca/orb-react build && pnpm --filter @voca/orb-example-basic build",
+    "dev": "pnpm --filter @voca/orb-example-basic dev",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "pnpm --filter @voca/orb-core typecheck && pnpm --filter @voca/orb-react typecheck && pnpm --filter @voca/orb-example-basic typecheck",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  }
+}
