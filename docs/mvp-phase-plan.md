@@ -104,7 +104,7 @@ orb.destroy();
 
 6. Add examples and documentation.
    - Build `examples/basic` with theme/settings controls, draggable orb, and `avatar.wav`.
-   - Document the Gemini TTS Blob flow.
+   - Document the Gemini TTS Blob flow in the README.
 
 ## Red-Green Test Strategy
 
