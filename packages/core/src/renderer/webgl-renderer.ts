@@ -38,6 +38,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
     const gl = this.element.getContext("webgl", {
       alpha: true,
       premultipliedAlpha: false,
+      preserveDrawingBuffer: true,
       antialias: true,
       depth: false,
     });
