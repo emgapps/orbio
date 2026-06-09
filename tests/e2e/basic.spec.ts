@@ -1,4 +1,4 @@
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const themes = ["default", "calm", "cosmic"] as const;
 
@@ -123,6 +123,27 @@ test("plays sample audio and moves visible orbs into speaking state", async ({ p
   await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
 });
 
+test("keeps audio signal alive after unpinning and switching active orb", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
+  await expect(page.getByTestId("orb-default")).toHaveAttribute("data-orb-state", "speaking");
+  await waitForMeterAbove(page, "meter-rms");
+
+  await page.getByTestId("pin-toggle").click();
+  await expect(page.getByTestId("pin-toggle")).toHaveText("Pin");
+  await page.getByTestId("theme-option-calm").click();
+  await expect(page.getByTestId("orb-calm")).toHaveAttribute("data-orb-state", "speaking");
+  await waitForMeterAbove(page, "meter-rms");
+
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("play-toggle")).toHaveText("Play audio");
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
+  await waitForMeterAbove(page, "meter-rms");
+});
+
 async function expectNonblankOrb(orb: Locator) {
   await expect(orb.locator("[data-renderer]").first()).toBeAttached();
 
@@ -158,4 +179,14 @@ async function setRangeValue(locator: Locator, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }, value);
+}
+
+async function waitForMeterAbove(page: Page, testId: string, threshold = 0.001) {
+  await page.waitForFunction(
+    ({ meterTestId, minimum }) => {
+      const value = Number(document.querySelector(`[data-testid="${meterTestId}"]`)?.textContent ?? "0");
+      return value > minimum;
+    },
+    { meterTestId: testId, minimum: threshold },
+  );
 }

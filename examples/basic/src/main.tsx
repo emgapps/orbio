@@ -536,11 +536,13 @@ function Slider({ label, min, max, step, testId, value, onChange }: SliderProps)
 }
 
 function Meter({ label, value, cssVar }: { label: string; value: number; cssVar?: string }) {
+  const testId = `meter-${label.toLowerCase()}`;
+
   return (
     <div className="meter">
       <span>
         {label}
-        <strong>{value.toFixed(3)}</strong>
+        <strong data-testid={testId}>{value.toFixed(3)}</strong>
       </span>
       <div className="meter-track">
         <div className="meter-fill" style={{ width: cssVar ? `var(${cssVar})` : `${Math.round(value * 100)}%` }} />

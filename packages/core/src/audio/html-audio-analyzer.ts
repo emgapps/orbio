@@ -5,6 +5,13 @@ type BrowserAudioContext = AudioContext & {
   createMediaElementSource(mediaElement: HTMLMediaElement): MediaElementAudioSourceNode;
 };
 
+type SharedMediaElementSource = {
+  audioContext: BrowserAudioContext;
+  sourceNode: MediaElementAudioSourceNode;
+};
+
+const mediaElementSources = new WeakMap<HTMLAudioElement, SharedMediaElementSource>();
+
 declare global {
   interface Window {
     webkitAudioContext?: typeof AudioContext;
@@ -13,9 +20,8 @@ declare global {
 
 export class HtmlAudioAnalyzer {
   private audioSource: HTMLAudioElement | null;
-  private audioContext: BrowserAudioContext | null = null;
   private analyzer: AnalyserNode | null = null;
-  private sourceNode: MediaElementAudioSourceNode | null = null;
+  private mediaSource: SharedMediaElementSource | null = null;
   private timeData: Uint8Array<ArrayBuffer> | null = null;
   private signal = emptySignal;
 
@@ -51,40 +57,56 @@ export class HtmlAudioAnalyzer {
 
   destroy() {
     this.disconnect();
-    void this.audioContext?.close();
-    this.audioContext = null;
   }
 
   private ensureConnected() {
     if (this.analyzer && this.timeData) return;
 
-    const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
-    if (!AudioContextClass) {
-      throw new Error("Web Audio is not supported.");
-    }
-
-    this.audioContext = new AudioContextClass() as BrowserAudioContext;
-    this.sourceNode = this.audioContext.createMediaElementSource(this.audioSource!);
-    this.analyzer = this.audioContext.createAnalyser();
+    const mediaSource = getOrCreateMediaElementSource(this.audioSource!);
+    this.mediaSource = mediaSource;
+    this.analyzer = mediaSource.audioContext.createAnalyser();
     this.analyzer.fftSize = 1024;
     this.analyzer.smoothingTimeConstant = 0;
     this.timeData = new Uint8Array(this.analyzer.fftSize);
 
-    this.sourceNode.connect(this.analyzer);
-    this.analyzer.connect(this.audioContext.destination);
+    mediaSource.sourceNode.connect(this.analyzer);
+    this.analyzer.connect(mediaSource.audioContext.destination);
 
-    if (this.audioContext.state === "suspended") {
-      void this.audioContext.resume().catch((error: unknown) => {
+    if (mediaSource.audioContext.state === "suspended") {
+      void mediaSource.audioContext.resume().catch((error: unknown) => {
         this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       });
     }
   }
 
   private disconnect() {
-    this.sourceNode?.disconnect();
+    if (this.mediaSource && this.analyzer) {
+      try {
+        this.mediaSource.sourceNode.disconnect(this.analyzer);
+      } catch {
+        // The browser may already have severed this connection during teardown.
+      }
+    }
+
     this.analyzer?.disconnect();
-    this.sourceNode = null;
+    this.mediaSource = null;
     this.analyzer = null;
     this.timeData = null;
   }
+}
+
+function getOrCreateMediaElementSource(audioSource: HTMLAudioElement) {
+  const cached = mediaElementSources.get(audioSource);
+  if (cached) return cached;
+
+  const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
+  if (!AudioContextClass) {
+    throw new Error("Web Audio is not supported.");
+  }
+
+  const audioContext = new AudioContextClass() as BrowserAudioContext;
+  const sourceNode = audioContext.createMediaElementSource(audioSource);
+  const mediaSource = { audioContext, sourceNode };
+  mediaElementSources.set(audioSource, mediaSource);
+  return mediaSource;
 }
