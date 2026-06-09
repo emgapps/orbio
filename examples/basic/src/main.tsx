@@ -1,40 +1,173 @@
-import { Orb, type BuiltInThemeName, type OrbAudioSignal, type OrbSettings, type OrbState } from "@voca/orb-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Orb,
+  type BuiltInThemeName,
+  type OrbAudioSignal,
+  type OrbPosition,
+  type OrbSettings,
+  type OrbState,
+} from "@voca/orb-react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
 const themes: BuiltInThemeName[] = ["default", "calm", "cosmic"];
 
-const initialSettings: Partial<OrbSettings> = {
-  size: 132,
-  sensitivity: 0.9,
-  speed: 1,
-  pulseStrength: 0.75,
-  glowStrength: 0.9,
-  dprCap: 2,
+type ThemeRecord<T> = Record<BuiltInThemeName, T>;
+type CarouselFrame = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+const emptySignal: OrbAudioSignal = { rms: 0, energy: 0, pulse: 0 };
+
+const initialSettingsByTheme: ThemeRecord<Partial<OrbSettings>> = {
+  default: {
+    size: 132,
+    sensitivity: 0.9,
+    speed: 1,
+    pulseStrength: 0.75,
+    glowStrength: 0.9,
+    dprCap: 2,
+  },
+  calm: {
+    size: 132,
+    sensitivity: 0.9,
+    speed: 0.72,
+    pulseStrength: 0.48,
+    glowStrength: 0.62,
+    dprCap: 2,
+  },
+  cosmic: {
+    size: 132,
+    sensitivity: 0.9,
+    speed: 1.18,
+    pulseStrength: 0.95,
+    glowStrength: 1.1,
+    dprCap: 2,
+  },
+};
+
+const initialSignalsByTheme: ThemeRecord<OrbAudioSignal> = {
+  default: emptySignal,
+  calm: emptySignal,
+  cosmic: emptySignal,
+};
+
+const initialPositionsByTheme: ThemeRecord<OrbPosition> = {
+  default: { x: 24, y: 24 },
+  calm: { x: 48, y: 48 },
+  cosmic: { x: 72, y: 72 },
+};
+
+const initialDraggedByTheme: ThemeRecord<boolean> = {
+  default: false,
+  calm: false,
+  cosmic: false,
 };
 
 function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const carouselStageRef = useRef<HTMLDivElement | null>(null);
   const [audioSource, setAudioSource] = useState<HTMLAudioElement | null>(null);
   const [state, setState] = useState<OrbState>("idle");
-  const [theme, setTheme] = useState<BuiltInThemeName>("default");
-  const [settings, setSettings] = useState<Partial<OrbSettings>>(initialSettings);
-  const [signal, setSignal] = useState<OrbAudioSignal>({ rms: 0, energy: 0, pulse: 0 });
-  const [position, setPosition] = useState({ x: 24, y: 24 });
+  const [activeTheme, setActiveTheme] = useState<BuiltInThemeName>("default");
+  const [isPinned, setIsPinned] = useState(true);
+  const [settingsByTheme, setSettingsByTheme] = useState<ThemeRecord<Partial<OrbSettings>>>(initialSettingsByTheme);
+  const [signalsByTheme, setSignalsByTheme] = useState<ThemeRecord<OrbAudioSignal>>(initialSignalsByTheme);
+  const [positionsByTheme, setPositionsByTheme] = useState<ThemeRecord<OrbPosition>>(initialPositionsByTheme);
+  const [draggedByTheme, setDraggedByTheme] = useState<ThemeRecord<boolean>>(initialDraggedByTheme);
+  const [floatingMountPosition, setFloatingMountPosition] = useState<OrbPosition | null>(null);
+  const [carouselFrame, setCarouselFrame] = useState<CarouselFrame | null>(null);
 
   useEffect(() => {
     setAudioSource(audioRef.current);
   }, []);
 
+  useLayoutEffect(() => {
+    if (!isPinned) return undefined;
+
+    const stage = carouselStageRef.current;
+    if (!stage) return undefined;
+
+    let frameId = 0;
+
+    const measure = () => {
+      frameId = 0;
+      const rect = stage.getBoundingClientRect();
+      setCarouselFrame((current) => {
+        const next = {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        };
+
+        if (
+          current &&
+          Math.abs(current.left - next.left) < 1 &&
+          Math.abs(current.top - next.top) < 1 &&
+          Math.abs(current.width - next.width) < 1 &&
+          Math.abs(current.height - next.height) < 1
+        ) {
+          return current;
+        }
+
+        return next;
+      });
+    };
+
+    const queueMeasure = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(measure);
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(queueMeasure);
+    observer.observe(stage);
+    window.addEventListener("resize", queueMeasure);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", queueMeasure);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, [isPinned]);
+
+  useEffect(() => {
+    if (!isPinned) return undefined;
+
+    const stage = carouselStageRef.current;
+    if (!stage) return undefined;
+
+    const handleWheel = (event: WheelEvent) => {
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (Math.abs(delta) < 8) return;
+
+      event.preventDefault();
+      selectRelativeTheme(delta > 0 ? 1 : -1);
+    };
+
+    stage.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      stage.removeEventListener("wheel", handleWheel);
+    };
+  }, [activeTheme, isPinned]);
+
   const isSpeaking = state === "speaking";
+  const activeSettings = settingsByTheme[activeTheme];
+  const activeSignal = signalsByTheme[activeTheme];
+  const activePosition = getVisiblePosition(activeTheme);
 
   const signalStyle = useMemo(
     () => ({
-      "--energy": `${Math.round(signal.energy * 100)}%`,
-      "--pulse": `${Math.round(signal.pulse * 100)}%`,
+      "--energy": `${Math.round(activeSignal.energy * 100)}%`,
+      "--pulse": `${Math.round(activeSignal.pulse * 100)}%`,
     }),
-    [signal.energy, signal.pulse],
+    [activeSignal.energy, activeSignal.pulse],
   );
 
   async function togglePlayback() {
@@ -57,25 +190,163 @@ function App() {
   }
 
   function updateSetting(key: keyof OrbSettings, value: number) {
-    setSettings((current) => ({
+    setSettingsByTheme((current) => ({
       ...current,
-      [key]: value,
+      [activeTheme]: {
+        ...current[activeTheme],
+        [key]: value,
+      },
     }));
   }
 
+  function updateSignal(themeName: BuiltInThemeName, signal: OrbAudioSignal) {
+    setSignalsByTheme((current) => ({
+      ...current,
+      [themeName]: signal,
+    }));
+  }
+
+  function updateFloatingPosition(themeName: BuiltInThemeName, position: OrbPosition) {
+    setPositionsByTheme((current) => ({
+      ...current,
+      [themeName]: position,
+    }));
+    setDraggedByTheme((current) => ({
+      ...current,
+      [themeName]: true,
+    }));
+  }
+
+  function selectTheme(nextTheme: BuiltInThemeName) {
+    setActiveTheme(nextTheme);
+
+    if (!isPinned) {
+      const nextPosition = getFloatingStartPosition(nextTheme);
+      setFloatingMountPosition(nextPosition);
+      setPositionsByTheme((current) => ({
+        ...current,
+        [nextTheme]: nextPosition,
+      }));
+    }
+  }
+
+  function selectRelativeTheme(direction: -1 | 1) {
+    const currentIndex = themes.indexOf(activeTheme);
+    const nextIndex = (currentIndex + direction + themes.length) % themes.length;
+    selectTheme(themes[nextIndex]);
+  }
+
+  function togglePinned() {
+    if (isPinned) {
+      const nextPosition = getFloatingStartPosition(activeTheme);
+      setFloatingMountPosition(nextPosition);
+      setPositionsByTheme((current) => ({
+        ...current,
+        [activeTheme]: nextPosition,
+      }));
+      setIsPinned(false);
+      return;
+    }
+
+    setIsPinned(true);
+  }
+
+  function getCarouselSlot(themeName: BuiltInThemeName, centeredTheme = activeTheme) {
+    const themeIndex = themes.indexOf(themeName);
+    const centerIndex = themes.indexOf(centeredTheme);
+    const offset = (themeIndex - centerIndex + themes.length) % themes.length;
+    if (offset === 0) return 0;
+    return offset === 1 ? 1 : -1;
+  }
+
+  function getCarouselPosition(themeName: BuiltInThemeName, centeredTheme = activeTheme): OrbPosition | null {
+    if (!carouselFrame) return null;
+
+    const slot = getCarouselSlot(themeName, centeredTheme);
+    const size = settingsByTheme[themeName].size ?? 132;
+    const spacing = Math.min(220, Math.max(118, carouselFrame.width * 0.3));
+    const centerX = carouselFrame.left + carouselFrame.width / 2 + slot * spacing;
+    const centerY = carouselFrame.top + carouselFrame.height / 2;
+
+    return {
+      x: centerX - size / 2,
+      y: centerY - size / 2,
+    };
+  }
+
+  function getFloatingStartPosition(themeName: BuiltInThemeName) {
+    if (draggedByTheme[themeName]) return positionsByTheme[themeName];
+
+    return getCarouselPosition(themeName, themeName) ?? positionsByTheme[themeName];
+  }
+
+  function getVisiblePosition(themeName: BuiltInThemeName) {
+    if (!isPinned) return positionsByTheme[themeName];
+
+    return getCarouselPosition(themeName) ?? positionsByTheme[themeName];
+  }
+
+  const pinnedOrbs = isPinned
+    ? themes
+        .map((themeName) => {
+          const position = getCarouselPosition(themeName);
+          if (!position) return null;
+
+          const isActive = themeName === activeTheme;
+          const mountPosition = initialPositionsByTheme[themeName];
+          const offsetX = position.x - mountPosition.x;
+          const offsetY = position.y - mountPosition.y;
+
+          return (
+            <Orb
+              ariaLabel={`${themeName} theme orb`}
+              audioSource={isActive ? audioSource : null}
+              className={isActive ? "carousel-orb active" : "carousel-orb"}
+              data-active={isActive ? "true" : "false"}
+              data-orb-theme={themeName}
+              data-testid={`orb-${themeName}`}
+              draggable={false}
+              initialPosition={mountPosition}
+              key={themeName}
+              settings={settingsByTheme[themeName]}
+              state={state}
+              style={{
+                zIndex: isActive ? 28 : 18,
+                opacity: isActive ? 1 : 0.66,
+                transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
+              }}
+              theme={themeName}
+              onAudioSignal={isActive ? (signal) => updateSignal(themeName, signal) : undefined}
+              onClick={() => selectTheme(themeName)}
+            />
+          );
+        })
+        .filter(Boolean)
+    : null;
+
   return (
     <main className="app-shell">
-      <Orb
-        ariaLabel="Draggable voice orb"
-        audioSource={audioSource}
-        draggable
-        initialPosition={{ x: 24, y: 24 }}
-        settings={settings}
-        state={state}
-        theme={theme}
-        onAudioSignal={setSignal}
-        onPositionChange={setPosition}
-      />
+      {pinnedOrbs}
+
+      {!isPinned && (
+        <Orb
+          ariaLabel={`${activeTheme} theme draggable orb`}
+          audioSource={audioSource}
+          className="floating-orb active"
+          data-active="true"
+          data-orb-theme={activeTheme}
+          data-testid={`orb-${activeTheme}`}
+          draggable
+          initialPosition={floatingMountPosition ?? positionsByTheme[activeTheme]}
+          key={`floating-${activeTheme}`}
+          settings={activeSettings}
+          state={state}
+          style={{ zIndex: 80 }}
+          theme={activeTheme}
+          onAudioSignal={(signal) => updateSignal(activeTheme, signal)}
+          onPositionChange={(position) => updateFloatingPosition(activeTheme, position)}
+        />
+      )}
 
       <section className="workspace" aria-label="Orbio MVP controls">
         <header className="topbar">
@@ -89,21 +360,66 @@ function App() {
         </header>
 
         <div className="control-grid">
-          <section className="panel">
-            <h2>Theme</h2>
-            <div className="theme-row" role="group" aria-label="Theme">
-              {themes.map((name) => (
-                <button
-                  className={theme === name ? "theme-button active" : "theme-button"}
-                  key={name}
-                  type="button"
-                  onClick={() => setTheme(name)}
-                >
-                  <span className={`theme-swatch ${name}`} aria-hidden="true" />
-                  {name}
-                </button>
-              ))}
+          <section className="panel theme-panel">
+            <div className="panel-heading">
+              <h2>Theme</h2>
+              <button className="pin-button" type="button" onClick={togglePinned} data-testid="pin-toggle">
+                {isPinned ? "Unpin" : "Pin"}
+              </button>
             </div>
+
+            {isPinned ? (
+              <div className="carousel-shell">
+                <button
+                  aria-label="Previous theme"
+                  className="carousel-button previous"
+                  data-testid="carousel-previous"
+                  type="button"
+                  onClick={() => selectRelativeTheme(-1)}
+                >
+                  &lsaquo;
+                </button>
+                <div
+                  aria-label="Theme carousel"
+                  className="carousel-stage"
+                  data-active-theme={activeTheme}
+                  data-testid="theme-carousel"
+                  ref={carouselStageRef}
+                  role="group"
+                  tabIndex={0}
+                >
+                  <div className="carousel-labels" aria-hidden="true">
+                    <span className="carousel-label active" data-testid="active-theme-label">
+                      {activeTheme}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  aria-label="Next theme"
+                  className="carousel-button next"
+                  data-testid="carousel-next"
+                  type="button"
+                  onClick={() => selectRelativeTheme(1)}
+                >
+                  &rsaquo;
+                </button>
+              </div>
+            ) : (
+              <div className="theme-row" role="group" aria-label="Theme" data-testid="theme-selector">
+                {themes.map((themeName) => (
+                  <button
+                    className={activeTheme === themeName ? "theme-button active" : "theme-button"}
+                    data-testid={`theme-option-${themeName}`}
+                    key={themeName}
+                    type="button"
+                    onClick={() => selectTheme(themeName)}
+                  >
+                    <span className={`theme-swatch ${themeName}`} aria-hidden="true" />
+                    {themeName}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="panel">
@@ -113,7 +429,8 @@ function App() {
               max={220}
               min={72}
               step={1}
-              value={settings.size ?? 132}
+              testId="setting-size"
+              value={activeSettings.size ?? 132}
               onChange={(value) => updateSetting("size", value)}
             />
             <Slider
@@ -121,31 +438,35 @@ function App() {
               max={2}
               min={0}
               step={0.05}
-              value={settings.sensitivity ?? 0.9}
+              testId="setting-sensitivity"
+              value={activeSettings.sensitivity ?? 0.9}
               onChange={(value) => updateSetting("sensitivity", value)}
             />
             <Slider
               label="Speed"
               max={2.4}
               min={0.2}
-              step={0.05}
-              value={settings.speed ?? 1}
+              step={0.01}
+              testId="setting-speed"
+              value={activeSettings.speed ?? 1}
               onChange={(value) => updateSetting("speed", value)}
             />
             <Slider
               label="Pulse"
               max={1.5}
               min={0}
-              step={0.05}
-              value={settings.pulseStrength ?? 0.75}
+              step={0.01}
+              testId="setting-pulse"
+              value={activeSettings.pulseStrength ?? 0.75}
               onChange={(value) => updateSetting("pulseStrength", value)}
             />
             <Slider
               label="Glow"
               max={1.5}
               min={0}
-              step={0.05}
-              value={settings.glowStrength ?? 0.9}
+              step={0.01}
+              testId="setting-glow"
+              value={activeSettings.glowStrength ?? 0.9}
               onChange={(value) => updateSetting("glowStrength", value)}
             />
           </section>
@@ -153,17 +474,17 @@ function App() {
           <section className="panel">
             <h2>Signal</h2>
             <div className="meter-stack" style={signalStyle as React.CSSProperties}>
-              <Meter label="Energy" value={signal.energy} cssVar="--energy" />
-              <Meter label="Pulse" value={signal.pulse} cssVar="--pulse" />
-              <Meter label="RMS" value={signal.rms} />
+              <Meter label="Energy" value={activeSignal.energy} cssVar="--energy" />
+              <Meter label="Pulse" value={activeSignal.pulse} cssVar="--pulse" />
+              <Meter label="RMS" value={activeSignal.rms} />
             </div>
           </section>
 
           <section className="panel">
             <h2>Position</h2>
             <div className="position-readout" data-testid="position-readout">
-              <span>x {Math.round(position.x)}</span>
-              <span>y {Math.round(position.y)}</span>
+              <span>x {Math.round(activePosition.x)}</span>
+              <span>y {Math.round(activePosition.y)}</span>
             </div>
           </section>
         </div>
@@ -189,11 +510,12 @@ type SliderProps = {
   min: number;
   max: number;
   step: number;
+  testId: string;
   value: number;
   onChange: (value: number) => void;
 };
 
-function Slider({ label, min, max, step, value, onChange }: SliderProps) {
+function Slider({ label, min, max, step, testId, value, onChange }: SliderProps) {
   return (
     <label className="slider">
       <span>
@@ -201,6 +523,7 @@ function Slider({ label, min, max, step, value, onChange }: SliderProps) {
         <strong>{value.toFixed(step < 1 ? 2 : 0)}</strong>
       </span>
       <input
+        data-testid={testId}
         max={max}
         min={min}
         step={step}
