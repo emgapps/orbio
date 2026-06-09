@@ -11,6 +11,10 @@ import { createRoot } from "react-dom/client";
 import "./styles.css";
 
 const themes: BuiltInThemeName[] = ["default", "calm", "cosmic"];
+const carouselWheelDeadZone = 10;
+const carouselWheelThreshold = 260;
+const carouselWheelCooldownMs = 420;
+const carouselWheelIdleResetMs = 280;
 
 type ThemeRecord<T> = Record<BuiltInThemeName, T>;
 type CarouselFrame = {
@@ -70,6 +74,11 @@ const initialDraggedByTheme: ThemeRecord<boolean> = {
 function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const carouselStageRef = useRef<HTMLDivElement | null>(null);
+  const carouselWheelRef = useRef({
+    accumulatedDelta: 0,
+    lastNavigationAt: 0,
+    lastWheelAt: 0,
+  });
   const [audioSource, setAudioSource] = useState<HTMLAudioElement | null>(null);
   const [state, setState] = useState<OrbState>("idle");
   const [activeTheme, setActiveTheme] = useState<BuiltInThemeName>("default");
@@ -145,17 +154,36 @@ function App() {
     if (!stage) return undefined;
 
     const handleWheel = (event: WheelEvent) => {
-      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      if (Math.abs(delta) < 8) return;
+      const delta = getNormalizedWheelDelta(event, stage);
+      if (Math.abs(delta) < carouselWheelDeadZone) return;
 
       event.preventDefault();
-      selectRelativeTheme(delta > 0 ? 1 : -1);
+
+      const now = window.performance.now();
+      const wheel = carouselWheelRef.current;
+
+      if (now - wheel.lastWheelAt > carouselWheelIdleResetMs || Math.sign(delta) !== Math.sign(wheel.accumulatedDelta)) {
+        wheel.accumulatedDelta = 0;
+      }
+
+      wheel.lastWheelAt = now;
+
+      if (now - wheel.lastNavigationAt < carouselWheelCooldownMs) return;
+
+      wheel.accumulatedDelta += delta;
+      if (Math.abs(wheel.accumulatedDelta) < carouselWheelThreshold) return;
+
+      selectRelativeTheme(wheel.accumulatedDelta > 0 ? 1 : -1);
+      wheel.accumulatedDelta = 0;
+      wheel.lastNavigationAt = now;
     };
 
     stage.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
       stage.removeEventListener("wheel", handleWheel);
+      carouselWheelRef.current.accumulatedDelta = 0;
+      carouselWheelRef.current.lastWheelAt = 0;
     };
   }, [activeTheme, isPinned]);
 
@@ -515,6 +543,14 @@ function App() {
       />
     </main>
   );
+}
+
+function getNormalizedWheelDelta(event: WheelEvent, stage: HTMLElement) {
+  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return delta * 16;
+  if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return delta * stage.clientHeight;
+  return delta;
 }
 
 type SliderProps = {

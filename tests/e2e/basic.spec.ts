@@ -26,12 +26,18 @@ test("renders a pinned three-orb carousel and cycles the active theme", async ({
   await expect(activeLabel).toHaveText("calm");
   await expect(page.getByTestId("orb-calm")).toHaveAttribute("data-active", "true");
 
-  await carousel.evaluate((node) => {
-    node.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 120 }));
-  });
+  await dispatchCarouselWheel(carousel, 120);
+  await expect(carousel).toHaveAttribute("data-active-theme", "calm");
+  await expect(activeLabel).toHaveText("calm");
+
+  await dispatchCarouselWheel(carousel, 150);
   await expect(carousel).toHaveAttribute("data-active-theme", "cosmic");
   await expect(activeLabel).toHaveText("cosmic");
   await expect(page.getByTestId("orb-cosmic")).toHaveAttribute("data-active", "true");
+
+  await dispatchCarouselWheel(carousel, 300);
+  await expect(carousel).toHaveAttribute("data-active-theme", "cosmic");
+  await expect(activeLabel).toHaveText("cosmic");
 
   await page.getByTestId("orb-default").click();
   await expect(carousel).toHaveAttribute("data-active-theme", "default");
@@ -217,6 +223,12 @@ async function setRangeValue(locator: Locator, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }, value);
+}
+
+async function dispatchCarouselWheel(locator: Locator, deltaY: number) {
+  await locator.evaluate((node, nextDeltaY) => {
+    node.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: nextDeltaY }));
+  }, deltaY);
 }
 
 async function waitForMeterAbove(page: Page, testId: string, threshold = 0.001) {
