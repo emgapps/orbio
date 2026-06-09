@@ -167,6 +167,26 @@ test("plays sample audio and moves visible orbs into speaking state", async ({ p
   await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
 });
 
+test("restarts each theme audio track when switching active orb", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByTestId("audio-default")).toHaveAttribute("src", "/avatar.wav");
+  await expect(page.getByTestId("audio-calm")).toHaveAttribute("src", "/avatar-pitched-down.wav");
+  await expect(page.getByTestId("audio-cosmic")).toHaveAttribute("src", "/avatar-pitched-up.wav");
+
+  await setAudioTime(page, "audio-calm", 3);
+  await page.getByTestId("carousel-next").click();
+  await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
+  await expect.poll(() => getAudioTime(page, "audio-calm")).toBeLessThan(1);
+  await expect.poll(() => getAudioPaused(page, "audio-default")).toBe(true);
+
+  await setAudioTime(page, "audio-cosmic", 3);
+  await page.getByTestId("carousel-next").click();
+  await expect(page.getByTestId("play-toggle")).toHaveText("Pause audio");
+  await expect.poll(() => getAudioTime(page, "audio-cosmic")).toBeLessThan(1);
+  await expect.poll(() => getAudioPaused(page, "audio-calm")).toBe(true);
+});
+
 test("keeps audio signal alive after unpinning and switching active orb", async ({ page }) => {
   await page.goto("/");
 
@@ -239,4 +259,44 @@ async function waitForMeterAbove(page: Page, testId: string, threshold = 0.001) 
     },
     { meterTestId: testId, minimum: threshold },
   );
+}
+
+async function setAudioTime(page: Page, testId: string, time: number) {
+  await page.getByTestId(testId).evaluate(
+    async (node, nextTime) => {
+      const audio = node as HTMLAudioElement;
+
+      if (audio.readyState < HTMLMediaElement.HAVE_METADATA) {
+        await new Promise<void>((resolve, reject) => {
+          const handleLoad = () => {
+            cleanup();
+            resolve();
+          };
+          const handleError = () => {
+            cleanup();
+            reject(new Error("Audio metadata failed to load."));
+          };
+          const cleanup = () => {
+            audio.removeEventListener("loadedmetadata", handleLoad);
+            audio.removeEventListener("error", handleError);
+          };
+
+          audio.addEventListener("loadedmetadata", handleLoad);
+          audio.addEventListener("error", handleError);
+          audio.load();
+        });
+      }
+
+      audio.currentTime = nextTime;
+    },
+    time,
+  );
+}
+
+async function getAudioTime(page: Page, testId: string) {
+  return page.getByTestId(testId).evaluate((node) => (node as HTMLAudioElement).currentTime);
+}
+
+async function getAudioPaused(page: Page, testId: string) {
+  return page.getByTestId(testId).evaluate((node) => (node as HTMLAudioElement).paused);
 }

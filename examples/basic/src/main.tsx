@@ -16,6 +16,12 @@ const carouselWheelThreshold = 260;
 const carouselWheelCooldownMs = 420;
 const carouselWheelIdleResetMs = 280;
 
+const audioTracksByTheme: ThemeRecord<string> = {
+  default: "/avatar.wav",
+  calm: "/avatar-pitched-down.wav",
+  cosmic: "/avatar-pitched-up.wav",
+};
+
 type ThemeRecord<T> = Record<BuiltInThemeName, T>;
 type CarouselFrame = {
   left: number;
@@ -72,7 +78,12 @@ const initialDraggedByTheme: ThemeRecord<boolean> = {
 };
 
 function App() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRefs = useRef<ThemeRecord<HTMLAudioElement | null>>({
+    default: null,
+    calm: null,
+    cosmic: null,
+  });
+  const activeThemeRef = useRef<BuiltInThemeName>("default");
   const carouselStageRef = useRef<HTMLDivElement | null>(null);
   const carouselWheelRef = useRef({
     accumulatedDelta: 0,
@@ -91,8 +102,12 @@ function App() {
   const [carouselFrame, setCarouselFrame] = useState<CarouselFrame | null>(null);
 
   useEffect(() => {
-    setAudioSource(audioRef.current);
+    setAudioSource(audioRefs.current.default);
   }, []);
+
+  useEffect(() => {
+    activeThemeRef.current = activeTheme;
+  }, [activeTheme]);
 
   useLayoutEffect(() => {
     if (!isPinned) return undefined;
@@ -201,7 +216,7 @@ function App() {
   );
 
   async function togglePlayback() {
-    const audio = audioRef.current;
+    const audio = getAudioElement(activeTheme);
     if (!audio) return;
 
     if (isSpeaking) {
@@ -210,13 +225,7 @@ function App() {
       return;
     }
 
-    try {
-      await audio.play();
-      setState("speaking");
-    } catch (error) {
-      setState("error");
-      console.error(error);
-    }
+    await playThemeAudio(activeTheme, false);
   }
 
   function updateSetting(key: keyof OrbSettings, value: number) {
@@ -248,6 +257,9 @@ function App() {
   }
 
   function selectTheme(nextTheme: BuiltInThemeName) {
+    if (nextTheme === activeThemeRef.current) return;
+
+    activeThemeRef.current = nextTheme;
     setActiveTheme(nextTheme);
 
     if (!isPinned) {
@@ -258,10 +270,12 @@ function App() {
         [nextTheme]: nextPosition,
       }));
     }
+
+    void playThemeAudio(nextTheme, true);
   }
 
   function selectRelativeTheme(direction: -1 | 1) {
-    const currentIndex = themes.indexOf(activeTheme);
+    const currentIndex = themes.indexOf(activeThemeRef.current);
     const nextIndex = (currentIndex + direction + themes.length) % themes.length;
     selectTheme(themes[nextIndex]);
   }
@@ -324,6 +338,64 @@ function App() {
     if (!isPinned) return positionsByTheme[themeName];
 
     return getCarouselViewportPosition(themeName) ?? positionsByTheme[themeName];
+  }
+
+  function getAudioElement(themeName: BuiltInThemeName) {
+    return audioRefs.current[themeName];
+  }
+
+  function pauseInactiveAudioElements(themeName: BuiltInThemeName) {
+    for (const candidateTheme of themes) {
+      if (candidateTheme === themeName) continue;
+
+      const audio = getAudioElement(candidateTheme);
+      if (!audio) continue;
+
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }
+
+  async function playThemeAudio(themeName: BuiltInThemeName, restart: boolean) {
+    const audio = getAudioElement(themeName);
+    if (!audio) return;
+
+    activeThemeRef.current = themeName;
+    pauseInactiveAudioElements(themeName);
+
+    if (restart) audio.currentTime = 0;
+
+    setAudioSource(audio);
+
+    try {
+      await audio.play();
+      setState("speaking");
+    } catch (error) {
+      setState("error");
+      console.error(error);
+    }
+  }
+
+  function handleAudioEnded(themeName: BuiltInThemeName) {
+    const audio = getAudioElement(themeName);
+    if (audio) audio.currentTime = 0;
+    updateSignal(themeName, emptySignal);
+
+    if (activeThemeRef.current === themeName) {
+      setState("idle");
+    }
+  }
+
+  function handleAudioPause(themeName: BuiltInThemeName) {
+    if (activeThemeRef.current === themeName) {
+      setState("idle");
+    }
+  }
+
+  function handleAudioPlay(themeName: BuiltInThemeName) {
+    if (activeThemeRef.current === themeName) {
+      setState("speaking");
+    }
   }
 
   const pinnedOrbs = isPinned
@@ -530,17 +602,20 @@ function App() {
         </div>
       </section>
 
-      <audio
-        ref={audioRef}
-        src="/avatar.wav"
-        preload="auto"
-        onEnded={() => {
-          if (audioRef.current) audioRef.current.currentTime = 0;
-          setState("idle");
-        }}
-        onPause={() => setState("idle")}
-        onPlay={() => setState("speaking")}
-      />
+      {themes.map((themeName) => (
+        <audio
+          data-testid={`audio-${themeName}`}
+          key={themeName}
+          preload="auto"
+          ref={(element) => {
+            audioRefs.current[themeName] = element;
+          }}
+          src={audioTracksByTheme[themeName]}
+          onEnded={() => handleAudioEnded(themeName)}
+          onPause={() => handleAudioPause(themeName)}
+          onPlay={() => handleAudioPlay(themeName)}
+        />
+      ))}
     </main>
   );
 }
