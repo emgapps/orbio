@@ -7,6 +7,8 @@ export type OrbPosition = {
   y: number;
 };
 
+export type OrbPositionMode = "fixed" | "absolute";
+
 export type OrbSettings = {
   size: number;
   sensitivity: number;
@@ -70,6 +72,7 @@ export type CreateOrbOptions = OrbCallbacks & {
   audioSource?: HTMLAudioElement | null;
   draggable?: boolean;
   initialPosition?: OrbPosition;
+  positionMode?: OrbPositionMode;
   ariaLabel?: string;
 };
 

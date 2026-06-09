@@ -16,6 +16,7 @@ export type {
   OrbCallbacks,
   OrbController,
   OrbPosition,
+  OrbPositionMode,
   OrbSettings,
   OrbState,
   OrbTheme,

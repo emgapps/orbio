@@ -39,6 +39,44 @@ test("renders a pinned three-orb carousel and cycles the active theme", async ({
   await expect(page.getByTestId("orb-default")).toHaveAttribute("data-active", "true");
 });
 
+test("keeps pinned carousel orbs anchored to the theme section while scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 1000, height: 420 });
+  await page.goto("/");
+
+  const carousel = page.getByTestId("theme-carousel");
+  const orb = page.getByTestId("orb-default");
+
+  await expect(page.locator("[data-testid^='orb-']")).toHaveCount(3);
+  await expect(orb).toBeVisible();
+
+  const beforeCarousel = await carousel.boundingBox();
+  const beforeOrb = await orb.boundingBox();
+  expect(beforeCarousel).not.toBeNull();
+  expect(beforeOrb).not.toBeNull();
+
+  const beforeRelative = {
+    x: beforeOrb!.x - beforeCarousel!.x,
+    y: beforeOrb!.y - beforeCarousel!.y,
+  };
+
+  await page.evaluate(() => window.scrollTo(0, 160));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(80);
+
+  const afterCarousel = await carousel.boundingBox();
+  const afterOrb = await orb.boundingBox();
+  expect(afterCarousel).not.toBeNull();
+  expect(afterOrb).not.toBeNull();
+  expect(afterCarousel!.y).toBeLessThan(beforeCarousel!.y - 80);
+
+  const afterRelative = {
+    x: afterOrb!.x - afterCarousel!.x,
+    y: afterOrb!.y - afterCarousel!.y,
+  };
+
+  expect(Math.abs(afterRelative.x - beforeRelative.x)).toBeLessThan(2);
+  expect(Math.abs(afterRelative.y - beforeRelative.y)).toBeLessThan(2);
+});
+
 test("keeps graphic settings scoped to the active orb", async ({ page }) => {
   await page.goto("/");
 

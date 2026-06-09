@@ -4,6 +4,7 @@ import {
   type OrbAudioSignal,
   type OrbController,
   type OrbPosition,
+  type OrbPositionMode,
   type OrbSettings,
   type OrbState,
   type OrbTheme,
@@ -23,6 +24,7 @@ export type OrbProps = {
   audioSource?: HTMLAudioElement | null;
   draggable?: boolean;
   initialPosition?: OrbPosition;
+  positionMode?: OrbPositionMode;
   className?: string;
   style?: CSSProperties;
   ariaLabel?: string;
@@ -44,6 +46,7 @@ export function Orb({
   audioSource = null,
   draggable = false,
   initialPosition,
+  positionMode,
   className,
   style,
   ariaLabel,
@@ -78,6 +81,7 @@ export function Orb({
       audioSource,
       draggable,
       initialPosition,
+      positionMode,
       ariaLabel,
       onPositionChange: (position) => callbacksRef.current.onPositionChange?.(position),
       onAudioSignal: (signal) => callbacksRef.current.onAudioSignal?.(signal),
@@ -93,7 +97,7 @@ export function Orb({
         controllerRef.current = null;
       }
     };
-  }, [ariaLabel, draggable, initialX, initialY]);
+  }, [ariaLabel, draggable, initialX, initialY, positionMode]);
 
   useEffect(() => {
     if (state) controllerRef.current?.setState(state);

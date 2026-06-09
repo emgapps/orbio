@@ -25,9 +25,27 @@ describe("createOrb", () => {
 
     expect(container.style.width).toBe("128px");
     expect(container.style.height).toBe("128px");
+    expect(container.style.position).toBe("fixed");
     expect(container.getAttribute("role")).toBe("img");
     expect(container.getAttribute("aria-label")).toBe("Assistant orb");
     expect(container.firstElementChild?.getAttribute("data-renderer")).toBe("css");
+
+    orb.destroy();
+  });
+
+  it("can mount relative to a positioned parent", () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+
+    const orb = createOrb({
+      container,
+      initialPosition: { x: 12, y: 18 },
+      positionMode: "absolute",
+    });
+
+    expect(container.style.position).toBe("absolute");
+    expect(container.style.left).toBe("12px");
+    expect(container.style.top).toBe("18px");
 
     orb.destroy();
   });

@@ -128,10 +128,12 @@ function App() {
     const observer = new ResizeObserver(queueMeasure);
     observer.observe(stage);
     window.addEventListener("resize", queueMeasure);
+    window.addEventListener("scroll", queueMeasure, { passive: true });
 
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", queueMeasure);
+      window.removeEventListener("scroll", queueMeasure);
       if (frameId) window.cancelAnimationFrame(frameId);
     };
   }, [isPinned]);
@@ -265,8 +267,8 @@ function App() {
     const slot = getCarouselSlot(themeName, centeredTheme);
     const size = settingsByTheme[themeName].size ?? 132;
     const spacing = Math.min(220, Math.max(118, carouselFrame.width * 0.3));
-    const centerX = carouselFrame.left + carouselFrame.width / 2 + slot * spacing;
-    const centerY = carouselFrame.top + carouselFrame.height / 2;
+    const centerX = carouselFrame.width / 2 + slot * spacing;
+    const centerY = carouselFrame.height / 2;
 
     return {
       x: centerX - size / 2,
@@ -274,16 +276,26 @@ function App() {
     };
   }
 
+  function getCarouselViewportPosition(themeName: BuiltInThemeName, centeredTheme = activeTheme): OrbPosition | null {
+    const position = getCarouselPosition(themeName, centeredTheme);
+    if (!position || !carouselFrame) return null;
+
+    return {
+      x: carouselFrame.left + position.x,
+      y: carouselFrame.top + position.y,
+    };
+  }
+
   function getFloatingStartPosition(themeName: BuiltInThemeName) {
     if (draggedByTheme[themeName]) return positionsByTheme[themeName];
 
-    return getCarouselPosition(themeName, themeName) ?? positionsByTheme[themeName];
+    return getCarouselViewportPosition(themeName, themeName) ?? positionsByTheme[themeName];
   }
 
   function getVisiblePosition(themeName: BuiltInThemeName) {
     if (!isPinned) return positionsByTheme[themeName];
 
-    return getCarouselPosition(themeName) ?? positionsByTheme[themeName];
+    return getCarouselViewportPosition(themeName) ?? positionsByTheme[themeName];
   }
 
   const pinnedOrbs = isPinned
@@ -308,6 +320,7 @@ function App() {
               draggable={false}
               initialPosition={mountPosition}
               key={themeName}
+              positionMode="absolute"
               settings={settingsByTheme[themeName]}
               state={state}
               style={{
@@ -326,8 +339,6 @@ function App() {
 
   return (
     <main className="app-shell">
-      {pinnedOrbs}
-
       {!isPinned && (
         <Orb
           ariaLabel={`${activeTheme} theme draggable orb`}
@@ -388,6 +399,7 @@ function App() {
                   role="group"
                   tabIndex={0}
                 >
+                  {pinnedOrbs}
                   <div className="carousel-labels" aria-hidden="true">
                     <span className="carousel-label active" data-testid="active-theme-label">
                       {activeTheme}

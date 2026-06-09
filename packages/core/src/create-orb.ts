@@ -29,7 +29,7 @@ export function createOrb(options: CreateOrbOptions): OrbController {
   let frameId = 0;
   let startTime: number | null = null;
 
-  prepareContainer(container, settings, state, options.ariaLabel);
+  prepareContainer(container, settings, state, options.ariaLabel, options.positionMode);
 
   const renderer = createRenderer(settings, theme, options);
   container.replaceChildren(renderer.element);
@@ -62,7 +62,7 @@ export function createOrb(options: CreateOrbOptions): OrbController {
       if (state === nextState) return;
       state = nextState;
       settings = resolveEffectiveSettings(theme, state, settingsOverride);
-      prepareContainer(container, settings, state, options.ariaLabel);
+      prepareContainer(container, settings, state, options.ariaLabel, options.positionMode);
       renderer.resize(settings);
       drag?.setPosition(drag.getPosition());
       options.onStateChange?.(state);
@@ -71,7 +71,7 @@ export function createOrb(options: CreateOrbOptions): OrbController {
       themeInput = nextTheme;
       theme = resolveTheme(themeInput);
       settings = resolveEffectiveSettings(theme, state, settingsOverride);
-      prepareContainer(container, settings, state, options.ariaLabel);
+      prepareContainer(container, settings, state, options.ariaLabel, options.positionMode);
       renderer.resize(settings);
       drag?.setPosition(drag.getPosition());
     },
@@ -81,7 +81,7 @@ export function createOrb(options: CreateOrbOptions): OrbController {
         ...nextSettings,
       };
       settings = resolveEffectiveSettings(theme, state, settingsOverride);
-      prepareContainer(container, settings, state, options.ariaLabel);
+      prepareContainer(container, settings, state, options.ariaLabel, options.positionMode);
       renderer.resize(settings);
       drag?.setPosition(drag.getPosition());
     },
@@ -126,9 +126,10 @@ function prepareContainer(
   settings: OrbSettings,
   state: OrbState,
   ariaLabel = "Voice assistant orb",
+  positionMode: "fixed" | "absolute" = "fixed",
 ) {
   container.dataset.orbState = state;
-  container.style.position = "fixed";
+  container.style.position = positionMode;
   container.style.width = `${settings.size}px`;
   container.style.height = `${settings.size}px`;
   container.style.touchAction = "none";
