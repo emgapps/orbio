@@ -1,5 +1,5 @@
 {
-  "name": "@voca/orb-example-basic",
+  "name": "@emgapps/orb-example-basic",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@voca/orb-core": "workspace:*",
-    "@voca/orb-react": "workspace:*",
+    "@emgapps/orb-core": "workspace:*",
+    "@emgapps/orb-react": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

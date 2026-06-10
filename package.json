@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @voca/orb-core build && pnpm --filter @voca/orb-react build && pnpm --filter @voca/orb-example-basic build",
-    "dev": "pnpm --filter @voca/orb-example-basic dev",
+    "build": "pnpm --filter @emgapps/orb-core build && pnpm --filter @emgapps/orb-react build && pnpm --filter @emgapps/orb-example-basic build",
+    "dev": "pnpm --filter @emgapps/orb-example-basic dev",
+    "pack:packages": "mkdir -p dist-pack && pnpm --filter @emgapps/orb-core pack --pack-destination dist-pack && pnpm --filter @emgapps/orb-react pack --pack-destination dist-pack",
+    "publish:packages": "pnpm --filter @emgapps/orb-core publish --access public && pnpm --filter @emgapps/orb-react publish --access public",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "typecheck": "pnpm --filter @voca/orb-core build && pnpm --filter @voca/orb-react build && pnpm --filter @voca/orb-example-basic typecheck",
+    "typecheck": "pnpm --filter @emgapps/orb-core build && pnpm --filter @emgapps/orb-react build && pnpm --filter @emgapps/orb-example-basic typecheck",
     "clean": "pnpm -r exec rm -rf dist"
   },
   "devDependencies": {

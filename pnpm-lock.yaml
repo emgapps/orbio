@@ -44,10 +44,10 @@ importers:
 
   examples/basic:
     dependencies:
-      '@voca/orb-core':
+      '@emgapps/orb-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@voca/orb-react':
+      '@emgapps/orb-react':
         specifier: workspace:*
         version: link:../../packages/react
       react:
@@ -71,8 +71,8 @@ importers:
 
   packages/react:
     dependencies:
-      '@voca/orb-core':
-        specifier: workspace:*
+      '@emgapps/orb-core':
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       react:

@@ -1,6 +1,6 @@
 export { Orb } from "./Orb";
 export type { OrbProps } from "./Orb";
-export { createAudioUrlSession, createGoogleCloudTtsSession, createHtmlAudioSession } from "@voca/orb-core";
+export { createAudioUrlSession, createGoogleCloudTtsSession, createHtmlAudioSession } from "@emgapps/orb-core";
 export type {
   AudioSession,
   AudioSessionElementOptions,
@@ -17,4 +17,4 @@ export type {
   OrbSettings,
   OrbState,
   OrbTheme,
-} from "@voca/orb-core";
+} from "@emgapps/orb-core";

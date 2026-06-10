@@ -6,7 +6,7 @@ Update the basic example so the Theme panel supports a pinned three-orb carousel
 
 ## Feasibility Finding
 
-The current React wrapper can render three independent orbs. Each `<Orb />` instance creates its own core controller, renderer, drag controller, audio analyzer, and animation frame. No changes are required in `@voca/orb-core` or `@voca/orb-react`.
+The current React wrapper can render three independent orbs. Each `<Orb />` instance creates its own core controller, renderer, drag controller, audio analyzer, and animation frame. No changes are required in `@emgapps/orb-core` or `@emgapps/orb-react`.
 
 One implementation detail matters for audio: the browser only allows one `MediaElementAudioSourceNode` per HTML media element, so the example should pass the shared audio element only to the active orb.
 
@@ -36,8 +36,8 @@ One implementation detail matters for audio: the browser only allows one `MediaE
 
 ## Validation
 
-- Run `pnpm --filter @voca/orb-example-basic typecheck`.
-- Run `pnpm --filter @voca/orb-example-basic build`.
+- Run `pnpm --filter @emgapps/orb-example-basic typecheck`.
+- Run `pnpm --filter @emgapps/orb-example-basic build`.
 - Run `pnpm test:e2e`.
 - Manually verify the pinned carousel and unpinned dragging in the browser.
 
@@ -46,4 +46,4 @@ One implementation detail matters for audio: the browser only allows one `MediaE
 - The carousel uses the existing built-in themes: `default`, `calm`, and `cosmic`.
 - While unpinned, the visible theme selector switches to another saved orb rather than retheming the current one.
 - Each theme remembers its own floating position between unpin/pin cycles.
-- No changes are needed to `@voca/orb-core` or `@voca/orb-react`.
+- No changes are needed to `@emgapps/orb-core` or `@emgapps/orb-react`.

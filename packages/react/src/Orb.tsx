@@ -8,7 +8,7 @@ import {
   type OrbSettings,
   type OrbState,
   type OrbTheme,
-} from "@voca/orb-core";
+} from "@emgapps/orb-core";
 import {
   type CSSProperties,
   type HTMLAttributes,

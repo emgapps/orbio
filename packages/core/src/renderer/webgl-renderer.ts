@@ -30,7 +30,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
 
   constructor(settings: OrbSettings) {
     this.element = document.createElement("canvas");
-    this.element.className = "voca-orb-canvas";
+    this.element.className = "emgapps-orb-canvas";
     this.element.dataset.renderer = "webgl";
     this.element.style.display = "block";
     this.element.style.width = "100%";

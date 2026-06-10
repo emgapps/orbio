@@ -6,8 +6,8 @@ The MVP turns the original single-file speaking-orb demo into an npm library con
 
 The MVP will use two packages:
 
-- `@voca/orb-core` for renderer, audio analysis, dragging, themes, settings, and state.
-- `@voca/orb-react` for a React `<Orb />` wrapper around the core controller.
+- `@emgapps/orb-core` for renderer, audio analysis, dragging, themes, settings, and state.
+- `@emgapps/orb-react` for a React `<Orb />` wrapper around the core controller.
 
 Gemini TTS remains provider-agnostic in MVP documentation: Gemini audio bytes become a `Blob`, the `Blob` becomes an object URL, and the URL powers an `HTMLAudioElement` passed to the orb.
 
@@ -83,7 +83,7 @@ orb.destroy();
    - Add the basic example app shell.
 
 2. Extract the core WebGL renderer.
-   - Move the shader approach from the demo into `@voca/orb-core`.
+   - Move the shader approach from the demo into `@emgapps/orb-core`.
    - Expose renderer lifecycle methods for mount, resize, frame rendering, uniform updates, and destroy.
    - Normalize theme colors into shader uniforms.
 

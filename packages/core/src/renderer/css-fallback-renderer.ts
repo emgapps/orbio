@@ -6,7 +6,7 @@ export class CssFallbackRenderer implements OrbRenderer {
 
   constructor(settings: OrbSettings, theme: ResolvedOrbTheme) {
     this.element = document.createElement("div");
-    this.element.className = "voca-orb-fallback";
+    this.element.className = "emgapps-orb-fallback";
     this.element.dataset.renderer = "css";
     this.element.style.borderRadius = "999px";
     this.element.style.pointerEvents = "none";

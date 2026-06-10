@@ -8,7 +8,7 @@ import {
   type OrbPosition,
   type OrbSettings,
   type OrbState,
-} from "@voca/orb-react";
+} from "@emgapps/orb-react";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";

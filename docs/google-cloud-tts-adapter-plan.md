@@ -6,7 +6,7 @@ Add a small browser-side adapter layer that turns playable audio sources and Goo
 
 ## Public API
 
-The adapter layer lives in `@voca/orb-core` and is re-exported from `@voca/orb-react` for React apps.
+The adapter layer lives in `@emgapps/orb-core` and is re-exported from `@emgapps/orb-react` for React apps.
 
 ```ts
 type AudioSessionStatus = "idle" | "playing" | "paused" | "ended" | "error";

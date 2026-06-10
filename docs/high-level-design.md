@@ -1,4 +1,4 @@
-# Voca Orb NPM Library - High-Level Design
+# Orbio NPM Library - High-Level Design
 
 ## 1. Goal
 
@@ -170,7 +170,7 @@ The React package owns integration ergonomics:
 ### 7.1 React Component
 
 ```tsx
-import { Orb } from "@voca/orb-react";
+import { Orb } from "@emgapps/orb-react";
 
 export function AssistantOrb({ audioElement }: { audioElement: HTMLAudioElement | null }) {
   return (
@@ -196,7 +196,7 @@ export function AssistantOrb({ audioElement }: { audioElement: HTMLAudioElement 
 ### 7.2 Core Controller
 
 ```ts
-import { createOrb } from "@voca/orb-core";
+import { createOrb } from "@emgapps/orb-core";
 
 const orb = createOrb({
   container: document.querySelector("#orb-root")!,
@@ -489,4 +489,3 @@ Implementation should be validated through:
 - Should position persistence be enabled by default?
 - Should Gemini examples use raw audio bytes, a Blob URL, or a prebuilt audio element?
 - Is the visual target closer to the current ElevenLabs-style demo or more brandable assistant avatars?
-

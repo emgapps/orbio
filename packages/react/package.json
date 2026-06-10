@@ -1,24 +1,49 @@
 {
-  "name": "@voca/orb-react",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@emgapps/orb-react",
+  "version": "0.1.0",
+  "description": "React component wrapper for Orbio voice-driven orb UI.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "homepage": "https://github.com/emgapps/orbio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emgapps/orbio.git",
+    "directory": "packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/emgapps/orbio/issues"
+  },
+  "keywords": [
+    "react",
+    "voice",
+    "orb",
+    "webgl",
+    "audio",
+    "tts"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build"
   },
   "dependencies": {
-    "@voca/orb-core": "workspace:*"
+    "@emgapps/orb-core": "workspace:^"
   },
   "peerDependencies": {
     "react": ">=18",

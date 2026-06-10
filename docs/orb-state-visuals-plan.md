@@ -17,8 +17,8 @@ Add visual treatments for existing orb states without changing the public API. T
 ## Validation
 
 - `pnpm test`
-- `pnpm --filter @voca/orb-example-basic typecheck`
-- `pnpm --filter @voca/orb-example-basic build`
+- `pnpm --filter @emgapps/orb-example-basic typecheck`
+- `pnpm --filter @emgapps/orb-example-basic build`
 - `pnpm test:e2e`
 
 ## Assumptions
