@@ -10,6 +10,7 @@ type UniformMap = {
   speed: WebGLUniformLocation | null;
   pulseStrength: WebGLUniformLocation | null;
   glowStrength: WebGLUniformLocation | null;
+  effectMode: WebGLUniformLocation | null;
   colorBot: WebGLUniformLocation | null;
   colorMid: WebGLUniformLocation | null;
   colorTop: WebGLUniformLocation | null;
@@ -86,6 +87,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
     gl.uniform1f(uniforms.speed, input.settings.speed);
     gl.uniform1f(uniforms.pulseStrength, input.settings.pulseStrength);
     gl.uniform1f(uniforms.glowStrength, input.settings.glowStrength);
+    gl.uniform1f(uniforms.effectMode, getThemeEffectMode(input.theme));
     setColor(gl, uniforms.colorBot, input.theme.colors.bottom);
     setColor(gl, uniforms.colorMid, input.theme.colors.middle);
     setColor(gl, uniforms.colorTop, input.theme.colors.top);
@@ -156,6 +158,7 @@ function getUniforms(gl: WebGLRenderingContext, program: WebGLProgram): UniformM
     speed: gl.getUniformLocation(program, "uSpeed"),
     pulseStrength: gl.getUniformLocation(program, "uPulseStrength"),
     glowStrength: gl.getUniformLocation(program, "uGlowStrength"),
+    effectMode: gl.getUniformLocation(program, "uEffectMode"),
     colorBot: gl.getUniformLocation(program, "uColorBot"),
     colorMid: gl.getUniformLocation(program, "uColorMid"),
     colorTop: gl.getUniformLocation(program, "uColorTop"),
@@ -163,6 +166,13 @@ function getUniforms(gl: WebGLRenderingContext, program: WebGLProgram): UniformM
     auraB: gl.getUniformLocation(program, "uAuraB"),
     rim: gl.getUniformLocation(program, "uRim"),
   };
+}
+
+function getThemeEffectMode(theme: ResolvedOrbTheme) {
+  if (theme.name === "default") return 2;
+  if (theme.name === "calm") return 1;
+  if (theme.name === "cosmic") return 0;
+  return -1;
 }
 
 function setColor(
