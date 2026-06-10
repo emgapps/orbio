@@ -1,6 +1,6 @@
 import type { RenderFrameInput, OrbRenderer } from "./types";
 import { fragmentShaderSource, vertexShaderSource } from "./shaders";
-import type { OrbSettings, ResolvedOrbTheme } from "../types";
+import type { OrbSettings, OrbState, ResolvedOrbTheme } from "../types";
 
 type UniformMap = {
   res: WebGLUniformLocation | null;
@@ -11,6 +11,7 @@ type UniformMap = {
   pulseStrength: WebGLUniformLocation | null;
   glowStrength: WebGLUniformLocation | null;
   effectMode: WebGLUniformLocation | null;
+  stateMode: WebGLUniformLocation | null;
   colorBot: WebGLUniformLocation | null;
   colorMid: WebGLUniformLocation | null;
   colorTop: WebGLUniformLocation | null;
@@ -88,6 +89,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
     gl.uniform1f(uniforms.pulseStrength, input.settings.pulseStrength);
     gl.uniform1f(uniforms.glowStrength, input.settings.glowStrength);
     gl.uniform1f(uniforms.effectMode, getThemeEffectMode(input.theme));
+    gl.uniform1f(uniforms.stateMode, getStateEffectMode(input.state));
     setColor(gl, uniforms.colorBot, input.theme.colors.bottom);
     setColor(gl, uniforms.colorMid, input.theme.colors.middle);
     setColor(gl, uniforms.colorTop, input.theme.colors.top);
@@ -159,6 +161,7 @@ function getUniforms(gl: WebGLRenderingContext, program: WebGLProgram): UniformM
     pulseStrength: gl.getUniformLocation(program, "uPulseStrength"),
     glowStrength: gl.getUniformLocation(program, "uGlowStrength"),
     effectMode: gl.getUniformLocation(program, "uEffectMode"),
+    stateMode: gl.getUniformLocation(program, "uStateMode"),
     colorBot: gl.getUniformLocation(program, "uColorBot"),
     colorMid: gl.getUniformLocation(program, "uColorMid"),
     colorTop: gl.getUniformLocation(program, "uColorTop"),
@@ -173,6 +176,12 @@ function getThemeEffectMode(theme: ResolvedOrbTheme) {
   if (theme.name === "calm") return 1;
   if (theme.name === "cosmic") return 0;
   return -1;
+}
+
+export function getStateEffectMode(state: OrbState) {
+  if (state === "disabled") return 1;
+  if (state === "error") return 2;
+  return 0;
 }
 
 function setColor(

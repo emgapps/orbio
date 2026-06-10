@@ -65,6 +65,14 @@ describe("createOrb", () => {
     expect(container.style.height).toBe("144px");
     expect(onStateChange).toHaveBeenCalledWith("speaking");
 
+    orb.setState("disabled");
+    expect(container.dataset.orbState).toBe("disabled");
+    expect(onStateChange).toHaveBeenCalledWith("disabled");
+
+    orb.setState("error");
+    expect(container.dataset.orbState).toBe("error");
+    expect(onStateChange).toHaveBeenCalledWith("error");
+
     orb.destroy();
   });
 

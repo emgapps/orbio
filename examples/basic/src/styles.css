@@ -77,7 +77,8 @@ h2 {
 .play-button,
 .theme-button,
 .pin-button,
-.carousel-button {
+.carousel-button,
+.state-option {
   border: 1px solid rgba(25, 26, 29, 0.14);
   background: rgba(255, 255, 255, 0.72);
   color: #191a1d;
@@ -244,6 +245,41 @@ h2 {
   background: linear-gradient(135deg, #ff6b8f, #9058ff, #4fd6ff);
 }
 
+.state-panel {
+  min-height: 116px;
+}
+
+.state-value {
+  min-width: 104px;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: rgba(25, 26, 29, 0.06);
+  color: #4a4d54;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.state-segmented {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.state-option {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.state-option.active {
+  border-color: rgba(25, 26, 29, 0.5);
+  background: #fff;
+}
+
 .slider,
 .meter {
   display: grid;
@@ -364,5 +400,9 @@ h2 {
   .carousel-label {
     padding: 7px 6px;
     font-size: 11px;
+  }
+
+  .state-segmented {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

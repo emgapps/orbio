@@ -153,7 +153,7 @@ describe("audio session adapters", () => {
 
 function mockObjectUrlApis(urls: string[]) {
   const remainingUrls = [...urls];
-  const createObjectURL = vi.fn(() => remainingUrls.shift() ?? "blob:test-audio");
+  const createObjectURL = vi.fn((_blob: Blob) => remainingUrls.shift() ?? "blob:test-audio");
   const revokeObjectURL = vi.fn();
 
   Object.defineProperty(URL, "createObjectURL", {

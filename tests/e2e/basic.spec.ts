@@ -112,6 +112,32 @@ test("keeps graphic settings scoped to the active orb", async ({ page }) => {
   await expect(speed).toHaveValue("1.4");
 });
 
+test("previews unavailable and error orb states from example controls", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByTestId("state-selector")).toBeVisible();
+  await expect(page.getByTestId("active-state-label")).toHaveText("Idle");
+  await expect(page.getByTestId("state-option-idle")).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByTestId("state-option-unavailable").click();
+  await expect(page.getByTestId("active-state-label")).toHaveText("Unavailable");
+  await expect(page.getByTestId("state-option-unavailable")).toHaveAttribute("aria-pressed", "true");
+
+  for (const theme of themes) {
+    await expect(page.getByTestId(`orb-${theme}`)).toHaveAttribute("data-orb-state", "disabled");
+  }
+  await expectNonblankOrb(page.getByTestId("orb-default"));
+
+  await page.getByTestId("state-option-error").click();
+  await expect(page.getByTestId("active-state-label")).toHaveText("Error");
+  await expect(page.getByTestId("state-option-error")).toHaveAttribute("aria-pressed", "true");
+
+  for (const theme of themes) {
+    await expect(page.getByTestId(`orb-${theme}`)).toHaveAttribute("data-orb-state", "error");
+  }
+  await expectNonblankOrb(page.getByTestId("orb-default"));
+});
+
 test("unpinned mode leaves one draggable orb and remembers positions per theme", async ({ page }) => {
   await page.goto("/");
 

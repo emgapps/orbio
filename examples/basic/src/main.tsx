@@ -18,6 +18,12 @@ const carouselWheelDeadZone = 10;
 const carouselWheelThreshold = 260;
 const carouselWheelCooldownMs = 420;
 const carouselWheelIdleResetMs = 280;
+const stateOptions = [
+  { id: "idle", label: "Idle", state: "idle" },
+  { id: "speaking", label: "Speaking", state: "speaking" },
+  { id: "unavailable", label: "Unavailable", state: "disabled" },
+  { id: "error", label: "Error", state: "error" },
+] satisfies Array<{ id: string; label: string; state: OrbState }>;
 
 const audioTracksByTheme: ThemeRecord<string> = {
   default: "/avatar.wav",
@@ -557,6 +563,33 @@ function App() {
             )}
           </section>
 
+          <section className="panel state-panel">
+            <div className="panel-heading">
+              <h2>State</h2>
+              <span className="state-value" data-testid="active-state-label">
+                {getStateLabel(state)}
+              </span>
+            </div>
+            <div className="state-segmented" role="group" aria-label="Orb state" data-testid="state-selector">
+              {stateOptions.map((option) => {
+                const isSelected = state === option.state;
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={isSelected ? "state-option active" : "state-option"}
+                    data-testid={`state-option-${option.id}`}
+                    key={option.id}
+                    type="button"
+                    onClick={() => setState(option.state)}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           <section className="panel">
             <h2>Graphic Settings</h2>
             <Slider
@@ -646,6 +679,11 @@ function getNormalizedWheelDelta(event: WheelEvent, stage: HTMLElement) {
   if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return delta * 16;
   if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return delta * stage.clientHeight;
   return delta;
+}
+
+function getStateLabel(state: OrbState) {
+  if (state === "disabled") return "Unavailable";
+  return state[0].toUpperCase() + state.slice(1);
 }
 
 type SliderProps = {

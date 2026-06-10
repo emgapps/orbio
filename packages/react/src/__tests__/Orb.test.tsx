@@ -36,6 +36,16 @@ describe("Orb", () => {
       expect(root.dataset.orbState).toBe("speaking");
       expect(root.style.width).toBe("140px");
     });
+
+    rerender(<Orb ariaLabel="Reactive orb" state="disabled" settings={{ size: 140 }} />);
+    await waitFor(() => {
+      expect(root.dataset.orbState).toBe("disabled");
+    });
+
+    rerender(<Orb ariaLabel="Reactive orb" state="error" settings={{ size: 140 }} />);
+    await waitFor(() => {
+      expect(root.dataset.orbState).toBe("error");
+    });
   });
 
   it("destroys the core controller on unmount", () => {
