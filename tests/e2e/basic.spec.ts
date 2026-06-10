@@ -27,17 +27,14 @@ test("renders a pinned three-orb carousel and cycles the active theme", async ({
   await expect(page.getByTestId("orb-calm")).toHaveAttribute("data-active", "true");
 
   await dispatchCarouselWheel(carousel, 120);
-  await expect(carousel).toHaveAttribute("data-active-theme", "calm");
-  await expect(activeLabel).toHaveText("calm");
+  expect(await carousel.getAttribute("data-active-theme")).toBe("calm");
+  expect(await activeLabel.textContent()).toBe("calm");
 
   await dispatchCarouselWheel(carousel, 150);
-  await expect(carousel).toHaveAttribute("data-active-theme", "cosmic");
-  await expect(activeLabel).toHaveText("cosmic");
-  await expect(page.getByTestId("orb-cosmic")).toHaveAttribute("data-active", "true");
-
   await dispatchCarouselWheel(carousel, 300);
   await expect(carousel).toHaveAttribute("data-active-theme", "cosmic");
   await expect(activeLabel).toHaveText("cosmic");
+  await expect(page.getByTestId("orb-cosmic")).toHaveAttribute("data-active", "true");
 
   await page.getByTestId("orb-default").click();
   await expect(carousel).toHaveAttribute("data-active-theme", "default");

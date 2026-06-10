@@ -53,21 +53,24 @@ pnpm test:e2e
 
 The original demo voice clip is preserved at `examples/basic/public/avatar.wav` for the MVP example app.
 
-## Gemini TTS Audio Flow
+## TTS Audio Flow
 
-Orbio stays provider-agnostic in the MVP. For Gemini or any other TTS provider, convert the returned audio bytes into a browser audio source, then pass the resulting `HTMLAudioElement` to `<Orb />`.
+Orbio stays provider-agnostic at the orb boundary: `<Orb />` still consumes an `HTMLAudioElement`. Use the adapter helpers to turn source files, playable URLs, or backend-returned Google Cloud TTS audio into a shared playback session.
 
 ```ts
-const audioBlob = new Blob([geminiAudioBytes], { type: "audio/wav" });
-const audioUrl = URL.createObjectURL(audioBlob);
-const audio = new Audio(audioUrl);
+import { createGoogleCloudTtsSession } from "@voca/orb-react";
+
+const session = createGoogleCloudTtsSession({
+  audioContent: response.audioContent,
+  audioEncoding: "MP3",
+});
 
 // React example:
-<Orb audioSource={audio} state="speaking" />;
+<Orb audioSource={session.audioSource} state="speaking" />;
 ```
 
-Revoke object URLs when the audio is no longer needed:
+Dispose sessions when the audio is no longer needed:
 
 ```ts
-URL.revokeObjectURL(audioUrl);
+session.dispose();
 ```

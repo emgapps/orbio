@@ -1,4 +1,5 @@
 export { createOrb } from "./create-orb";
+export { createAudioUrlSession, createGoogleCloudTtsSession, createHtmlAudioSession } from "./audio/adapters";
 export { computeRmsFromTimeDomain, emptySignal, nextAudioSignal } from "./audio/signal";
 export { HtmlAudioAnalyzer } from "./audio/html-audio-analyzer";
 export { createDragController } from "./drag/controller";
@@ -22,3 +23,14 @@ export type {
   OrbTheme,
   ResolvedOrbTheme,
 } from "./types";
+export type {
+  AudioSession,
+  AudioSessionElementOptions,
+  AudioSessionEvent,
+  AudioSessionListener,
+  AudioSessionPauseOptions,
+  AudioSessionPlayOptions,
+  AudioSessionStatus,
+  GoogleCloudTtsAudioEncoding,
+  GoogleCloudTtsSessionInput,
+} from "./audio/adapters";

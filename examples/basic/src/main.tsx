@@ -1,5 +1,8 @@
 import {
+  createHtmlAudioSession,
   Orb,
+  type AudioSession,
+  type AudioSessionEvent,
   type BuiltInThemeName,
   type OrbAudioSignal,
   type OrbPosition,
@@ -83,6 +86,11 @@ function App() {
     calm: null,
     cosmic: null,
   });
+  const audioSessionsRef = useRef<ThemeRecord<AudioSession | null>>({
+    default: null,
+    calm: null,
+    cosmic: null,
+  });
   const activeThemeRef = useRef<BuiltInThemeName>("default");
   const carouselStageRef = useRef<HTMLDivElement | null>(null);
   const carouselWheelRef = useRef({
@@ -102,7 +110,27 @@ function App() {
   const [carouselFrame, setCarouselFrame] = useState<CarouselFrame | null>(null);
 
   useEffect(() => {
-    setAudioSource(audioRefs.current.default);
+    const unsubscribeCallbacks: Array<() => void> = [];
+
+    for (const themeName of themes) {
+      const audio = audioRefs.current[themeName];
+      if (!audio) continue;
+
+      const session = createHtmlAudioSession(audio);
+      audioSessionsRef.current[themeName] = session;
+      unsubscribeCallbacks.push(session.subscribe((event) => handleAudioSessionEvent(themeName, event)));
+    }
+
+    setAudioSource(audioSessionsRef.current.default?.audioSource ?? null);
+
+    return () => {
+      for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+
+      for (const themeName of themes) {
+        audioSessionsRef.current[themeName]?.dispose();
+        audioSessionsRef.current[themeName] = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -200,7 +228,7 @@ function App() {
       carouselWheelRef.current.accumulatedDelta = 0;
       carouselWheelRef.current.lastWheelAt = 0;
     };
-  }, [activeTheme, isPinned]);
+  }, [isPinned]);
 
   const isSpeaking = state === "speaking";
   const activeSettings = settingsByTheme[activeTheme];
@@ -216,12 +244,11 @@ function App() {
   );
 
   async function togglePlayback() {
-    const audio = getAudioElement(activeTheme);
-    if (!audio) return;
+    const session = getAudioSession(activeTheme);
+    if (!session) return;
 
     if (isSpeaking) {
-      audio.pause();
-      setState("idle");
+      session.pause();
       return;
     }
 
@@ -340,35 +367,29 @@ function App() {
     return getCarouselViewportPosition(themeName) ?? positionsByTheme[themeName];
   }
 
-  function getAudioElement(themeName: BuiltInThemeName) {
-    return audioRefs.current[themeName];
+  function getAudioSession(themeName: BuiltInThemeName) {
+    return audioSessionsRef.current[themeName];
   }
 
-  function pauseInactiveAudioElements(themeName: BuiltInThemeName) {
+  function pauseInactiveAudioSessions(themeName: BuiltInThemeName) {
     for (const candidateTheme of themes) {
       if (candidateTheme === themeName) continue;
 
-      const audio = getAudioElement(candidateTheme);
-      if (!audio) continue;
-
-      audio.pause();
-      audio.currentTime = 0;
+      getAudioSession(candidateTheme)?.pause({ reset: true });
     }
   }
 
   async function playThemeAudio(themeName: BuiltInThemeName, restart: boolean) {
-    const audio = getAudioElement(themeName);
-    if (!audio) return;
+    const session = getAudioSession(themeName);
+    if (!session) return;
 
     activeThemeRef.current = themeName;
-    pauseInactiveAudioElements(themeName);
+    pauseInactiveAudioSessions(themeName);
 
-    if (restart) audio.currentTime = 0;
-
-    setAudioSource(audio);
+    setAudioSource(session.audioSource);
 
     try {
-      await audio.play();
+      await session.play({ restart });
       setState("speaking");
     } catch (error) {
       setState("error");
@@ -376,25 +397,27 @@ function App() {
     }
   }
 
-  function handleAudioEnded(themeName: BuiltInThemeName) {
-    const audio = getAudioElement(themeName);
-    if (audio) audio.currentTime = 0;
-    updateSignal(themeName, emptySignal);
-
-    if (activeThemeRef.current === themeName) {
-      setState("idle");
+  function handleAudioSessionEvent(themeName: BuiltInThemeName, event: AudioSessionEvent) {
+    if (event.status === "ended") {
+      getAudioSession(themeName)?.reset();
+      updateSignal(themeName, emptySignal);
     }
-  }
 
-  function handleAudioPause(themeName: BuiltInThemeName) {
-    if (activeThemeRef.current === themeName) {
-      setState("idle");
-    }
-  }
+    if (activeThemeRef.current !== themeName) return;
 
-  function handleAudioPlay(themeName: BuiltInThemeName) {
-    if (activeThemeRef.current === themeName) {
+    if (event.status === "playing") {
       setState("speaking");
+      return;
+    }
+
+    if (event.status === "idle" || event.status === "paused" || event.status === "ended") {
+      setState("idle");
+      return;
+    }
+
+    if (event.status === "error") {
+      setState("error");
+      if (event.error) console.error(event.error);
     }
   }
 
@@ -611,9 +634,6 @@ function App() {
             audioRefs.current[themeName] = element;
           }}
           src={audioTracksByTheme[themeName]}
-          onEnded={() => handleAudioEnded(themeName)}
-          onPause={() => handleAudioPause(themeName)}
-          onPlay={() => handleAudioPlay(themeName)}
         />
       ))}
     </main>
