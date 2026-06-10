@@ -2,6 +2,8 @@
   "name": "@emgapps/orb-react",
   "version": "0.1.0",
   "description": "React component wrapper for Orbio voice-driven orb UI.",
+  "author": "Artem Hulmetov",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -32,6 +34,7 @@
   },
   "files": [
     "dist",
+    "LICENSE",
     "README.md"
   ],
   "publishConfig": {

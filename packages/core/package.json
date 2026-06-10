@@ -2,6 +2,8 @@
   "name": "@emgapps/orb-core",
   "version": "0.1.0",
   "description": "Framework-agnostic voice orb renderer, audio session, theme, and drag utilities.",
+  "author": "Artem Hulmetov",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -31,6 +33,7 @@
   },
   "files": [
     "dist",
+    "LICENSE",
     "README.md"
   ],
   "publishConfig": {

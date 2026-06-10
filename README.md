@@ -193,8 +193,7 @@ Both packages are configured for scoped public publishing with `publishConfig.ac
 Before publishing:
 
 1. Confirm you have npm publish access to the `@emgapps` scope.
-2. Choose and add a project license if this should be open source.
-3. Run validation:
+2. Run validation:
 
 ```bash
 pnpm test
@@ -222,3 +221,7 @@ pnpm publish:packages
 - [High-Level Design](docs/high-level-design.md)
 - [MVP Phase Plan](docs/mvp-phase-plan.md)
 - [Orb State Visuals Plan](docs/orb-state-visuals-plan.md)
+
+## License
+
+MIT

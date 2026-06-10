@@ -2,6 +2,8 @@
   "name": "orbio",
   "version": "0.0.0",
   "private": true,
+  "author": "Artem Hulmetov",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "pnpm --filter @emgapps/orb-core build && pnpm --filter @emgapps/orb-react build && pnpm --filter @emgapps/orb-example-basic build",

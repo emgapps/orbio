@@ -31,3 +31,7 @@ export function VoiceOrb() {
 ```
 
 The component renders WebGL when available and uses a CSS fallback otherwise. It re-exports audio session helpers and public types from `@emgapps/orb-core`. See the repository README for full integration details.
+
+## License
+
+MIT

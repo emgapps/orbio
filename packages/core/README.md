@@ -31,3 +31,7 @@ session.subscribe((event) => {
 ```
 
 The package exports renderer, theme, settings, drag, and audio session helpers. See the repository README for full integration details.
+
+## License
+
+MIT
