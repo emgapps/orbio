@@ -25,7 +25,7 @@ export function createOrb(options: CreateOrbOptions): OrbController {
   let theme = resolveTheme(themeInput);
   let settingsOverride = options.settings ?? {};
   let settings = resolveEffectiveSettings(theme, state, settingsOverride);
-  let manualSignal: Partial<OrbAudioSignal> | null = null;
+  let manualSignal: Partial<OrbAudioSignal> | null = options.audioSignal ?? null;
   let frameId = 0;
   let startTime: number | null = null;
 

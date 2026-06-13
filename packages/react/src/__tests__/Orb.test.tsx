@@ -48,6 +48,37 @@ describe("Orb", () => {
     });
   });
 
+  it("forwards manual audio signals to the core controller", async () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frameCallbacks.push(callback);
+      return frameCallbacks.length;
+    });
+    const onAudioSignal = vi.fn();
+    const { rerender } = render(
+      <Orb
+        ariaLabel="Manual signal orb"
+        audioSignal={{ rms: 0.4, energy: 0.5, pulse: 0.6 }}
+        onAudioSignal={onAudioSignal}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(frameCallbacks.length).toBeGreaterThan(0);
+    });
+    frameCallbacks[0]?.(100);
+
+    expect(onAudioSignal).toHaveBeenLastCalledWith({ rms: 0.4, energy: 0.5, pulse: 0.6 });
+
+    rerender(<Orb ariaLabel="Manual signal orb" audioSignal={null} onAudioSignal={onAudioSignal} />);
+    await waitFor(() => {
+      expect(frameCallbacks.length).toBeGreaterThan(1);
+    });
+    frameCallbacks[1]?.(116);
+
+    expect(onAudioSignal).toHaveBeenLastCalledWith({ rms: 0, energy: 0, pulse: 0 });
+  });
+
   it("destroys the core controller on unmount", () => {
     const { unmount } = render(<Orb ariaLabel="Disposable orb" />);
 

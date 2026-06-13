@@ -70,6 +70,7 @@ export type CreateOrbOptions = OrbCallbacks & {
   theme?: BuiltInThemeName | OrbTheme;
   settings?: Partial<OrbSettings>;
   audioSource?: HTMLAudioElement | null;
+  audioSignal?: Partial<OrbAudioSignal> | null;
   draggable?: boolean;
   initialPosition?: OrbPosition;
   positionMode?: OrbPositionMode;
@@ -81,6 +82,6 @@ export type OrbController = {
   setTheme(theme: BuiltInThemeName | OrbTheme): void;
   setSettings(settings: Partial<OrbSettings>): void;
   setAudioSource(audioSource: HTMLAudioElement | null): void;
-  setAudioSignal(signal: Partial<OrbAudioSignal>): void;
+  setAudioSignal(signal: Partial<OrbAudioSignal> | null): void;
   destroy(): void;
 };

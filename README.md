@@ -61,6 +61,17 @@ export function VoiceOrb() {
 
 No stylesheet import is required. The component mounts a canvas renderer when WebGL is available and falls back to a CSS renderer otherwise.
 
+If your audio is streamed through WebRTC, Web Audio, or another source that is not analyzable as a regular media element, drive the orb with a manual signal:
+
+```tsx
+<Orb
+  audioSignal={{ rms: 0.2, energy: 0.4, pulse: 0.6 }}
+  state="speaking"
+/>
+```
+
+Set `audioSignal={null}` or omit it to fall back to automatic `audioSource` analysis.
+
 ## Core Integration
 
 Use `@emgapps/orb-core` directly when integrating outside React.

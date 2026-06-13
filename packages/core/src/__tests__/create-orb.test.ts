@@ -76,6 +76,34 @@ describe("createOrb", () => {
     orb.destroy();
   });
 
+  it("can drive rendering from a manual audio signal and clear it", () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frameCallbacks.push(callback);
+      return frameCallbacks.length;
+    });
+    const container = document.createElement("div");
+    const onAudioSignal = vi.fn();
+    document.body.append(container);
+
+    const orb = createOrb({
+      container,
+      audioSignal: { rms: 0.4, energy: 0.5, pulse: 0.6 },
+      onAudioSignal,
+    });
+
+    frameCallbacks[0]?.(100);
+
+    expect(onAudioSignal).toHaveBeenLastCalledWith({ rms: 0.4, energy: 0.5, pulse: 0.6 });
+
+    orb.setAudioSignal(null);
+    frameCallbacks[1]?.(116);
+
+    expect(onAudioSignal).toHaveBeenLastCalledWith({ rms: 0, energy: 0, pulse: 0 });
+
+    orb.destroy();
+  });
+
   it("cleans up renderer children on destroy", () => {
     const container = document.createElement("div");
     document.body.append(container);

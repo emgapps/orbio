@@ -22,6 +22,7 @@ export type OrbProps = {
   theme?: BuiltInThemeName | OrbTheme;
   settings?: Partial<OrbSettings>;
   audioSource?: HTMLAudioElement | null;
+  audioSignal?: Partial<OrbAudioSignal> | null;
   draggable?: boolean;
   initialPosition?: OrbPosition;
   positionMode?: OrbPositionMode;
@@ -44,6 +45,7 @@ export function Orb({
   theme = "default",
   settings,
   audioSource = null,
+  audioSignal,
   draggable = false,
   initialPosition,
   positionMode,
@@ -79,6 +81,7 @@ export function Orb({
       theme,
       settings,
       audioSource,
+      audioSignal,
       draggable,
       initialPosition,
       positionMode,
@@ -114,6 +117,10 @@ export function Orb({
   useEffect(() => {
     controllerRef.current?.setAudioSource(audioSource);
   }, [audioSource]);
+
+  useEffect(() => {
+    controllerRef.current?.setAudioSignal(audioSignal ?? null);
+  }, [audioSignal]);
 
   const mergedStyle = useMemo<CSSProperties>(
     () => ({
