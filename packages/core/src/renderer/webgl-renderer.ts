@@ -1,4 +1,5 @@
 import type { RenderFrameInput, OrbRenderer } from "./types";
+import { ErrorShakeTransition } from "./state-animations";
 import { fragmentShaderSource, vertexShaderSource } from "./shaders";
 import type { OrbSettings, OrbState, ResolvedOrbTheme } from "../types";
 
@@ -28,6 +29,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
   private readonly program: WebGLProgram;
   private readonly uniforms: UniformMap;
   private readonly buffer: WebGLBuffer;
+  private readonly errorShake = new ErrorShakeTransition();
   private lastRenderTime: number | null = null;
   private unavailableAmount = 0;
 
@@ -79,6 +81,8 @@ export class WebGlOrbRenderer implements OrbRenderer {
 
   render(input: RenderFrameInput) {
     this.resize(input.settings);
+    const shake = this.errorShake.update(input.state, input.time);
+    this.element.style.transform = `translate3d(${shake.x.toFixed(2)}px, ${shake.y.toFixed(2)}px, 0)`;
 
     const gl = this.gl;
     const uniforms = this.uniforms;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultSettings } from "../settings";
 import { CssFallbackRenderer } from "../renderer/css-fallback-renderer";
+import { ErrorShakeTransition } from "../renderer/state-animations";
 import type { RenderFrameInput } from "../renderer/types";
 import { getStateEffectMode } from "../renderer/webgl-renderer";
 import { resolveTheme } from "../themes";
@@ -30,6 +31,7 @@ describe("orb renderer state visuals", () => {
   it("applies red overlay styling in the CSS fallback renderer", () => {
     const renderer = new CssFallbackRenderer(defaultSettings, resolveTheme("default"));
 
+    renderer.render(createFrame("idle", 0));
     renderer.render(createFrame("error"));
 
     expect(renderer.element.style.filter).toBe("none");
@@ -38,11 +40,24 @@ describe("orb renderer state visuals", () => {
     expect(renderer.element.dataset.visualOverlay).toBe("red-gradient");
     expect(renderer.element.getAttribute("style")).toContain("rgba(255, 35, 52, 0.44)");
   });
+
+  it("shakes briefly when transitioning into the error state", () => {
+    const transition = new ErrorShakeTransition();
+
+    expect(transition.update("error", 0)).toEqual({ x: 0, y: 0 });
+    expect(transition.update("idle", 0.1)).toEqual({ x: 0, y: 0 });
+    expect(transition.update("error", 0.2)).toEqual({ x: 0, y: 0 });
+
+    const activeShake = transition.update("error", 0.24);
+    expect(Math.abs(activeShake.x)).toBeGreaterThan(0.1);
+
+    expect(transition.update("error", 0.7)).toEqual({ x: 0, y: 0 });
+  });
 });
 
-function createFrame(state: OrbState): RenderFrameInput {
+function createFrame(state: OrbState, time = 0): RenderFrameInput {
   return {
-    time: 0,
+    time,
     signal: { rms: 0.2, energy: 0.4, pulse: 0.3 },
     settings: defaultSettings,
     theme: resolveTheme("default"),

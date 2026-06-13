@@ -1,8 +1,10 @@
 import type { RenderFrameInput, OrbRenderer } from "./types";
+import { ErrorShakeTransition } from "./state-animations";
 import type { OrbSettings, OrbState, ResolvedOrbTheme } from "../types";
 
 export class CssFallbackRenderer implements OrbRenderer {
   readonly element: HTMLDivElement;
+  private readonly errorShake = new ErrorShakeTransition();
 
   constructor(settings: OrbSettings, theme: ResolvedOrbTheme) {
     this.element = document.createElement("div");
@@ -28,9 +30,10 @@ export class CssFallbackRenderer implements OrbRenderer {
 
     const disabled = input.state === "disabled";
     const scale = disabled ? 0.96 : 1 + input.signal.energy * 0.08 * input.settings.pulseStrength;
+    const shake = this.errorShake.update(input.state, input.time);
     this.element.style.filter = disabled ? "grayscale(0.9) saturate(0.12) brightness(0.78)" : "none";
     this.element.style.opacity = disabled ? "0.62" : "1";
-    this.element.style.transform = `scale(${scale.toFixed(4)})`;
+    this.element.style.transform = `translate3d(${shake.x.toFixed(2)}px, ${shake.y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
   }
 
   destroy() {
