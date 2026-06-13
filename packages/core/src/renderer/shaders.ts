@@ -19,6 +19,7 @@ uniform float uPulseStrength;
 uniform float uGlowStrength;
 uniform float uEffectMode;
 uniform float uStateMode;
+uniform float uUnavailableAmount;
 uniform vec3  uColorBot;
 uniform vec3  uColorMid;
 uniform vec3  uColorTop;
@@ -199,11 +200,13 @@ void main(){
     col += fireTint * flames * flameMask * (0.14 + 0.075 * uGlowStrength + 0.018 * speak);
   }
 
-  if (uStateMode > 0.5 && uStateMode < 1.5) {
+  if (uUnavailableAmount > 0.001) {
     float gray = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, vec3(gray), 0.90);
-    col *= 0.78;
-  } else if (uStateMode > 1.5) {
+    col = mix(col, vec3(gray), 0.90 * uUnavailableAmount);
+    col *= mix(1.0, 0.78, uUnavailableAmount);
+  }
+
+  if (uStateMode > 1.5) {
     float redSweep = smoothstep(-0.62, 0.58, p.y);
     float redBloom = 1.0 - smoothstep(0.08, 0.74, length(p - vec2(-0.20, 0.24)));
     float redAmount = clamp(0.22 + redSweep * 0.22 + redBloom * 0.20 + uPulse * 0.05, 0.0, 0.58);
@@ -218,11 +221,13 @@ void main(){
     auraCol = mix(auraCol, vec3(1.0, 0.34, 0.08), 0.28 + 0.025*uPulse);
   }
   float auraA = aura * (0.13 + 0.5*uEnergy*uGlowStrength);
-  if (uStateMode > 0.5 && uStateMode < 1.5) {
+  if (uUnavailableAmount > 0.001) {
     float auraGray = dot(auraCol, vec3(0.299, 0.587, 0.114));
-    auraCol = mix(auraCol, vec3(auraGray), 0.92);
-    auraA *= 0.24;
-  } else if (uStateMode > 1.5) {
+    auraCol = mix(auraCol, vec3(auraGray), 0.92 * uUnavailableAmount);
+    auraA *= mix(1.0, 0.24, uUnavailableAmount);
+  }
+
+  if (uStateMode > 1.5) {
     auraCol = mix(auraCol, vec3(1.0, 0.02, 0.03), 0.68);
     auraA *= 1.15;
   }

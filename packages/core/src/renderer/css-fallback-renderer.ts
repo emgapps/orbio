@@ -10,8 +10,9 @@ export class CssFallbackRenderer implements OrbRenderer {
     this.element.dataset.renderer = "css";
     this.element.style.borderRadius = "999px";
     this.element.style.pointerEvents = "none";
-    this.element.style.willChange = "transform, box-shadow, background, filter";
-    this.element.style.transition = "box-shadow 120ms linear, filter 120ms linear, opacity 120ms linear";
+    this.element.style.willChange = "transform, box-shadow, background, filter, opacity";
+    this.element.style.transition =
+      "box-shadow 180ms ease, filter 360ms ease, opacity 360ms ease, transform 220ms ease";
     this.resize(settings);
     this.paint(theme, 0, settings, "idle");
   }

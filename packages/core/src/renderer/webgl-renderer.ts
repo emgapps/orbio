@@ -12,6 +12,7 @@ type UniformMap = {
   glowStrength: WebGLUniformLocation | null;
   effectMode: WebGLUniformLocation | null;
   stateMode: WebGLUniformLocation | null;
+  unavailableAmount: WebGLUniformLocation | null;
   colorBot: WebGLUniformLocation | null;
   colorMid: WebGLUniformLocation | null;
   colorTop: WebGLUniformLocation | null;
@@ -27,6 +28,8 @@ export class WebGlOrbRenderer implements OrbRenderer {
   private readonly program: WebGLProgram;
   private readonly uniforms: UniformMap;
   private readonly buffer: WebGLBuffer;
+  private lastRenderTime: number | null = null;
+  private unavailableAmount = 0;
 
   constructor(settings: OrbSettings) {
     this.element = document.createElement("canvas");
@@ -90,6 +93,7 @@ export class WebGlOrbRenderer implements OrbRenderer {
     gl.uniform1f(uniforms.glowStrength, input.settings.glowStrength);
     gl.uniform1f(uniforms.effectMode, getThemeEffectMode(input.theme));
     gl.uniform1f(uniforms.stateMode, getStateEffectMode(input.state));
+    gl.uniform1f(uniforms.unavailableAmount, this.updateUnavailableAmount(input));
     setColor(gl, uniforms.colorBot, input.theme.colors.bottom);
     setColor(gl, uniforms.colorMid, input.theme.colors.middle);
     setColor(gl, uniforms.colorTop, input.theme.colors.top);
@@ -105,6 +109,28 @@ export class WebGlOrbRenderer implements OrbRenderer {
     this.gl.deleteBuffer(this.buffer);
     this.gl.deleteProgram(this.program);
     this.element.remove();
+  }
+
+  private updateUnavailableAmount(input: RenderFrameInput) {
+    const target = input.state === "disabled" ? 1 : 0;
+
+    if (this.lastRenderTime === null) {
+      this.lastRenderTime = input.time;
+      return this.unavailableAmount;
+    }
+
+    const delta = Math.max(0, input.time - this.lastRenderTime);
+    this.lastRenderTime = input.time;
+
+    const duration = target > this.unavailableAmount ? 0.36 : 0.22;
+    const blend = 1 - Math.exp(-delta / duration);
+    this.unavailableAmount += (target - this.unavailableAmount) * blend;
+
+    if (Math.abs(target - this.unavailableAmount) < 0.001) {
+      this.unavailableAmount = target;
+    }
+
+    return this.unavailableAmount;
   }
 }
 
@@ -162,6 +188,7 @@ function getUniforms(gl: WebGLRenderingContext, program: WebGLProgram): UniformM
     glowStrength: gl.getUniformLocation(program, "uGlowStrength"),
     effectMode: gl.getUniformLocation(program, "uEffectMode"),
     stateMode: gl.getUniformLocation(program, "uStateMode"),
+    unavailableAmount: gl.getUniformLocation(program, "uUnavailableAmount"),
     colorBot: gl.getUniformLocation(program, "uColorBot"),
     colorMid: gl.getUniformLocation(program, "uColorMid"),
     colorTop: gl.getUniformLocation(program, "uColorTop"),
