@@ -32,7 +32,7 @@ export function VoiceOrb() {
 
 The component renders WebGL when available and uses a CSS fallback otherwise. It re-exports audio session helpers and public types from `@emgapps/orb-core`. See the repository README for full integration details.
 
-For streamed audio, WebRTC, or custom Web Audio playback where the orb cannot analyze a normal media element, pass a manual signal:
+For streamed audio, WebRTC, or custom Web Audio playback where the orb cannot analyze a normal media element, pass a manual signal instead of `audioSource`:
 
 ```tsx
 <Orb
@@ -41,7 +41,7 @@ For streamed audio, WebRTC, or custom Web Audio playback where the orb cannot an
 />
 ```
 
-Set `audioSignal={null}` or omit it to use the default `audioSource` analyzer.
+Manual signals override `audioSource` analysis while set. Keep `rms`, `energy`, and `pulse` normalized to `0..1`; pass `audioSignal={null}` or omit it to use the default `audioSource` analyzer.
 
 ## License
 

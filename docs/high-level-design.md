@@ -219,6 +219,7 @@ type OrbProps = {
   theme?: BuiltInThemeName | OrbTheme;
   settings?: Partial<OrbSettings>;
   audioSource?: OrbAudioSource;
+  audioSignal?: Partial<OrbAudioSignal> | null;
   draggable?: boolean | DragOptions;
   initialPosition?: OrbPosition;
   persistPosition?: boolean | PositionPersistenceOptions;
@@ -242,8 +243,8 @@ type OrbProps = {
 Gemini TTS bytes or URL
   -> Blob or audio URL
   -> HTMLAudioElement or AudioBuffer
-  -> Orb audioSource
-  -> Web Audio AnalyserNode
+  -> Orb audioSource or manual audioSignal
+  -> Web Audio AnalyserNode or external analysis
   -> energy and pulse signals
   -> shader uniforms
 ```
@@ -264,7 +265,8 @@ Gemini TTS bytes or URL
 - If the audio source cannot be connected to Web Audio, allow manual signal input:
 
 ```ts
-orb.setAudioSignal({ energy: 0.42, pulse: 0.7 });
+orb.setAudioSignal({ rms: 0.2, energy: 0.42, pulse: 0.7 });
+orb.setAudioSignal(null);
 ```
 
 ## 9. Renderer Design
@@ -438,6 +440,7 @@ V1 should ship the smallest complete library:
 - Core WebGL renderer extracted from the existing demo.
 - Draggable orb with viewport clamping.
 - Audio analysis for `HTMLAudioElement`.
+- Manual external audio signal mode.
 - `idle` and `speaking` states.
 - Three built-in themes: `default`, `calm`, and `cosmic`.
 - Runtime settings for size, sensitivity, speed, pulse, glow, and DPR cap.
@@ -452,7 +455,6 @@ V1 should ship the smallest complete library:
 - More shader presets.
 - Controlled position mode.
 - Keyboard drag support.
-- Manual external audio signal mode.
 - Storybook or Ladle visual examples.
 - Automated screenshot regression checks.
 

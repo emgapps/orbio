@@ -61,7 +61,7 @@ export function VoiceOrb() {
 
 No stylesheet import is required. The component mounts a canvas renderer when WebGL is available and falls back to a CSS renderer otherwise.
 
-If your audio is streamed through WebRTC, Web Audio, or another source that is not analyzable as a regular media element, drive the orb with a manual signal:
+If your audio is streamed through WebRTC, Web Audio, or another source that is not analyzable as a regular media element, drive the orb with a manual signal instead of `audioSource`:
 
 ```tsx
 <Orb
@@ -70,7 +70,7 @@ If your audio is streamed through WebRTC, Web Audio, or another source that is n
 />
 ```
 
-Set `audioSignal={null}` or omit it to fall back to automatic `audioSource` analysis.
+The manual signal overrides `audioSource` analysis while it is set. Pass `audioSignal={null}` or omit it to use automatic `audioSource` analysis.
 
 ## Core Integration
 
@@ -113,7 +113,7 @@ type OrbState = "idle" | "speaking" | "error" | "disabled";
 ```
 
 - `idle`: animated resting orb.
-- `speaking`: audio-reactive orb driven by `HTMLAudioElement` energy.
+- `speaking`: audio-reactive orb driven by automatic `HTMLAudioElement` analysis or a manual `audioSignal`.
 - `error`: keeps the active theme visible and adds a red alert overlay/glow.
 - `disabled`: unavailable state; renders desaturated and almost black-and-white.
 
@@ -152,7 +152,7 @@ Theme colors support `#rgb` and `#rrggbb`.
 
 ## Audio Sessions
 
-Orbio stays provider-agnostic at the orb boundary: the orb consumes an `HTMLAudioElement`. The helper sessions create or wrap that element and expose lifecycle events.
+Orbio stays provider-agnostic at the audio boundary. For normal media playback, pass an `HTMLAudioElement` through `audioSource` and let the orb analyze it automatically. The helper sessions create or wrap that element and expose lifecycle events.
 
 ```ts
 import {
@@ -175,6 +175,8 @@ const googleTtsSession = createGoogleCloudTtsSession({
 ```
 
 Always call `session.dispose()` when the audio source is no longer needed. Google Cloud TTS sessions create an object URL and revoke it on dispose.
+
+Use `audioSignal` instead of an audio session when playback is already handled by WebRTC, a custom Web Audio graph, streaming TTS chunks, or another source that cannot be connected to the built-in analyzer. Supply normalized `rms`, `energy`, and `pulse` values in the `0..1` range, and clear the override with `audioSignal={null}` or `orb.setAudioSignal(null)` to return to `audioSource` analysis.
 
 ## Local Development
 

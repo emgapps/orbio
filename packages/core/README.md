@@ -32,12 +32,20 @@ session.subscribe((event) => {
 
 The package exports renderer, theme, settings, drag, and audio session helpers. See the repository README for full integration details.
 
-For streamed audio, WebRTC, or custom Web Audio playback, you can drive the orb directly:
+For streamed audio, WebRTC, or custom Web Audio playback that cannot be analyzed through a normal media element, drive the orb directly with a manual signal:
 
 ```ts
+const orb = createOrb({
+  container,
+  audioSignal: { rms: 0.2, energy: 0.4, pulse: 0.6 },
+  state: "speaking",
+});
+
 orb.setAudioSignal({ rms: 0.2, energy: 0.4, pulse: 0.6 });
 orb.setAudioSignal(null); // return to audioSource analysis
 ```
+
+Manual signals override `audioSource` analysis while set. Keep `rms`, `energy`, and `pulse` normalized to `0..1`.
 
 ## License
 

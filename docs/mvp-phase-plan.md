@@ -9,7 +9,7 @@ The MVP will use two packages:
 - `@emgapps/orb-core` for renderer, audio analysis, dragging, themes, settings, and state.
 - `@emgapps/orb-react` for a React `<Orb />` wrapper around the core controller.
 
-Gemini TTS remains provider-agnostic in MVP documentation: Gemini audio bytes become a `Blob`, the `Blob` becomes an object URL, and the URL powers an `HTMLAudioElement` passed to the orb.
+Gemini TTS remains provider-agnostic in MVP documentation: complete Gemini audio bytes become a `Blob`, the `Blob` becomes an object URL, and the URL powers an `HTMLAudioElement` passed to the orb. Sources that cannot be analyzed as an `HTMLAudioElement` can provide a manual audio signal instead.
 
 ## Key Implementation Decisions
 
@@ -18,7 +18,7 @@ Gemini TTS remains provider-agnostic in MVP documentation: Gemini audio bytes be
 - Provide a minimal CSS fallback renderer when WebGL is unavailable.
 - Support MVP states: `idle`, `speaking`, `error`, and `disabled`.
 - Support MVP built-in themes: `default`, `calm`, and `cosmic`.
-- Support MVP audio source: `HTMLAudioElement`.
+- Support MVP audio source: `HTMLAudioElement`, with a manual `audioSignal` override for streams or externally analyzed audio.
 - Support MVP settings: `size`, `sensitivity`, `speed`, `pulseStrength`, `glowStrength`, and `dprCap`.
 - Support uncontrolled draggable positioning with viewport clamping.
 - Defer position persistence, snap anchors, `MediaStream`, `AudioBuffer`, Web Component wrapper, and custom shader hooks.
@@ -46,6 +46,7 @@ type OrbProps = {
   theme?: BuiltInThemeName | OrbTheme;
   settings?: Partial<OrbSettings>;
   audioSource?: HTMLAudioElement | null;
+  audioSignal?: Partial<{ energy: number; pulse: number; rms: number }> | null;
   draggable?: boolean;
   initialPosition?: OrbPosition;
   className?: string;
@@ -72,6 +73,8 @@ orb.setState("speaking");
 orb.setTheme("cosmic");
 orb.setSettings({ sensitivity: 1.2 });
 orb.setAudioSource(audioElement);
+orb.setAudioSignal({ rms: 0.2, energy: 0.4, pulse: 0.6 });
+orb.setAudioSignal(null);
 orb.destroy();
 ```
 
@@ -90,6 +93,7 @@ orb.destroy();
 3. Add audio analysis.
    - Implement lazy `AudioContext` setup for `HTMLAudioElement`.
    - Compute RMS, `energy`, and `pulse`.
+   - Allow externally supplied `audioSignal` values to override automatic analysis.
    - Keep signal math pure and unit-testable.
 
 4. Add drag behavior.

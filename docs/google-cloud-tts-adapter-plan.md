@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a small browser-side adapter layer that turns playable audio sources and Google Cloud TTS REST audio responses into the `HTMLAudioElement` shape already consumed by Orbio.
+Add a small browser-side adapter layer that turns playable audio sources and Google Cloud TTS REST audio responses into the `HTMLAudioElement` shape consumed by Orbio's automatic analyzer.
 
 ## Public API
 
@@ -63,10 +63,22 @@ await session.play();
 
 The basic example wraps its existing hidden `<audio>` nodes with `createHtmlAudioSession(...)` so Playwright-visible audio elements stay stable while playback logic moves into the shared adapter.
 
+## Manual Signal Flow
+
+Streams, WebRTC playback, custom Web Audio graphs, or chunked TTS flows do not need an audio session if the application already owns playback and analysis. Those integrations can bypass `audioSource` and drive the orb with normalized signal values:
+
+```ts
+orb.setAudioSignal({ rms: 0.2, energy: 0.4, pulse: 0.6 });
+orb.setAudioSignal(null); // return to audioSource analysis
+```
+
+In React, pass the same values through `<Orb audioSignal={...} />`. While set, the manual signal overrides `audioSource` analysis.
+
 ## Boundaries
 
 - The adapter handles complete audio responses, not streaming TTS chunks.
-- The existing `Orb` and `createOrb` contracts remain `audioSource?: HTMLAudioElement | null`.
+- `audioSource?: HTMLAudioElement | null` remains the automatic-analysis contract for session-backed playback.
+- `audioSignal?: Partial<OrbAudioSignal> | null` is the supported override for sources that cannot use the built-in `HTMLAudioElement` analyzer.
 - Speech timing, phonemes, visemes, and provider-specific synthesis options remain outside this adapter layer.
 
 ## Validation
