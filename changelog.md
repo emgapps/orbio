@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Added unavailable and error orb state visuals, including animated unavailable desaturation and an error shake transition.
+- Added the lines-pattern background treatment to the example page orb area.
+- Updated audio session documentation to clarify automatic analysis and manual signal override behavior.
+
 ## 0.1.1
 
 - Added manual orb audio signals so consumers can drive the orb from WebRTC, custom Web Audio, streaming TTS, or other external audio pipelines.
